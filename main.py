@@ -14,6 +14,7 @@ app = FastAPI(title=APP_TITLE)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -41,21 +42,7 @@ def safe_load_model():
     global model, model_info
     if not os.path.exists(MODEL_PATH):
         return
-    
-    # --- Ensure pkg_resources is available (for Render + XGBoost environments) ---
-    import importlib, subprocess, sys
-
-    try:
-        import pkg_resources
-    except ModuleNotFoundError:
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "setuptools"])
-            pkg_resources = importlib.import_module("pkg_resources")
-        except Exception as e:
-            print(f"Failed to import pkg_resources dynamically: {e}")
-# ---------------------------------------------------------------------------
-
-
+        
     try:
         m = joblib.load(MODEL_PATH)
         # Try to introspect classifier attributes commonly available
