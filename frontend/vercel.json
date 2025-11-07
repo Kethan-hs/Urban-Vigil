@@ -2,17 +2,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "index.html",
+      "src": "api/main.py",
+      "use": "@vercel/python",
+      "config": { "maxLambdaSize": "50mb", "runtime": "python3.11" }
+    },
+    {
+      "src": "public/index.html",
       "use": "@vercel/static"
     }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ],
-  "env": {
-    "API_BASE": "https://urban-vigil-api.onrender.com"
-  }
+    { "src": "/api/(.*)", "dest": "/api/main.py" },
+    { "src": "/(.*)", "dest": "/public/index.html" }
+  ]
 }
