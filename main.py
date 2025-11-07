@@ -6,6 +6,21 @@ from typing import Optional, List, Dict, Any
 import joblib, os, math, traceback
 import numpy as np
 
+# --- Fix for Render: ensure pkg_resources exists before loading model ---
+import importlib, subprocess, sys
+
+try:
+    import pkg_resources
+except ModuleNotFoundError:
+    print("pkg_resources not found, installing setuptools...")
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "setuptools"])
+        pkg_resources = importlib.import_module("pkg_resources")
+        print("pkg_resources imported successfully.")
+    except Exception as e:
+        print(f"Failed to import pkg_resources dynamically: {e}")
+# -----------------------------------------------------------------------
+
 APP_TITLE = "Urban Vigil - Bengaluru Crime Predictor"
 
 app = FastAPI(title=APP_TITLE)
