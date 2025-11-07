@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Urban Vigil Pro — AI Safety Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      background: radial-gradient(circle at top left, rgba(124,58,237,0.1), transparent 40%),
+                  radial-gradient(circle at bottom right, rgba(14,165,233,0.08), transparent 40%),
+                  #020617;
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    .glass {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(8px);
+    }
+    #map {
+      height: 500px;
+      border-radius: 14px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+    .tab-active {
+      border-bottom: 2px solid #7c3aed;
+      color: white;
+    }
+    .risk-marker { border-radius: 50%; border: 2px solid rgba(0,0,0,0.4); }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="glass sticky top-0 z-40 backdrop-blur-xl py-4 shadow-lg">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-6">
+      <h1 class="text-2xl font-bold text-indigo-400">Urban Vigil Pro</h1>
+      <div class="flex gap-6 text-sm text-slate-300">
+        <button id="btn-dashboard" class="tab-active">Dashboard</button>
+        <button id="btn-heatmap">Heatmap</button>
+        <button id="btn-predict">Predict</button>
+        <button id="btn-safe-route">Safe Route</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-6 py-10 space-y-10">
+    <!-- Dashboard -->
+    <section id="page-dashboard" class="page" data-aos="fade-up">
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="glass p-6 rounded-lg shadow-md">
+          <h2 class="text-lg font-semibold mb-3">City Overview</h2>
+          <div id="dashboard-cards" class="space-y-3 text-sm"></div>
+        </div>
+        <div class="glass p-6 rounded-lg md:col-span-2">
+          <h2 class="text-lg font-semibold mb-3">Safety Map</h2>
+          <div id="map"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Heatmap -->
+    <section id="page-heatmap" class="page hidden" data-aos="fade-up">
+      <div class="glass p-6 rounded-lg">
+        <h2 class="text-lg font-semibold mb-4">Top Risk Zones</h2>
+        <div id="heatmap-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+      </div>
+    </section>
+
+    <!-- Predict -->
+    <section id="page-predict" class="page hidden" data-aos="fade-up">
+      <div class="glass p-6 rounded-lg max-w-lg mx-auto">
+        <h2 class="text-lg font-semibold mb-4">Predict Crime Risk</h2>
+        <form id="predict-form" class="space-y-4">
+          <select id="place-select" class="w-full p-2 bg-transparent border border-gray-700 rounded"></select>
+          <input id="hour-input" type="number" placeholder="Hour (0–23)" min="0" max="23" class="w-full p-2 bg-transparent border border-gray-700 rounded" />
+          <input id="dow-input" type="number" placeholder="Day (0=Mon…6=Sun)" min="0" max="6" class="w-full p-2 bg-transparent border border-gray-700 rounded" />
+          <button class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 rounded">Predict</button>
+        </form>
+        <div id="predict-result" class="mt-4"></div>
+      </div>
+    </section>
+
+    <!-- Safe Route -->
+    <section id="page-safe-route" class="page hidden" data-aos="fade-up">
+      <div class="glass p-6 rounded-lg max-w-2xl mx-auto">
+        <h2 class="text-lg font-semibold mb-4">Safe Route Planner</h2>
+        <form id="route-form" class="grid gap-4">
+          <select id="src-select" class="p-2 bg-transparent border border-gray-700 rounded"></select>
+          <select id="dst-select" class="p-2 bg-transparent border border-gray-700 rounded"></select>
+          <button class="py-2 bg-indigo-600 hover:bg-indigo-700 rounded">Get Safe Route</button>
+        </form>
+        <div id="route-result" class="mt-4 text-sm text-slate-300"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="text-center text-gray-500 text-sm py-8">
+    © 2025 Urban Vigil Pro | Built with ❤️ for safer cities
+  </footer>
+
+  <script>
+    AOS.init({ duration: 800, once: true });
+   const API_BASE = window.location.origin + "/api";
+
+
+    let map, markersLayer, routeLayer, heatData = [];
+
+    function initMap() {
+      map = L.map('map').setView([12.97, 77.59], 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+      markersLayer = L.layerGroup().addTo(map);
+      routeLayer = L.layerGroup().addTo(map);
+    }
+
+    function colorForRisk(r) {
+      if (r >= 70) return '#ef4444';
+      if (r >= 40) return '#f59e0b';
+      return '#22c55e';
+    }
+
+    async function loadDashboard() {
+      const res = await fetch(`${API_BASE}/dashboard`);
+      const data = await res.json();
+      document.getElementById('dashboard-cards').innerHTML = `
+        <div class="p-3 border border-slate-700 rounded">Places Monitored: <b>${data.places_monitored}</b></div>
+        <div class="p-3 border border-slate-700 rounded">Average Risk: <b>${data.average_risk}</b></div>
+        <div class="p-3 border border-slate-700 rounded">Top 3 Risky Areas: <b>${data.top_3_risky.map(t => t.place).join(', ')}</b></div>`;
+      loadHeatmap();
+    }
+
+    async function loadHeatmap() {
+      const res = await fetch(`${API_BASE}/heatmap`);
+      const data = await res.json();
+      heatData = data.heatmap;
+      markersLayer.clearLayers();
+      data.heatmap.forEach(p => {
+        const color = colorForRisk(p.risk_score);
+        const icon = L.divIcon({ html: `<div style='background:${color};width:16px;height:16px;border-radius:50%;border:2px solid #111'></div>` });
+        L.marker([p.lat, p.lon], { icon }).addTo(markersLayer).bindPopup(`<b>${p.place}</b><br>Risk: ${p.risk_score}`);
+      });
+    }
+
+    async function loadPlaces() {
+      const res = await fetch(`${API_BASE}/place-list`);
+      const data = await res.json();
+      ['place-select', 'src-select', 'dst-select'].forEach(id => {
+        const el = document.getElementById(id);
+        el.innerHTML = data.places.map(p => `<option>${p}</option>`).join('');
+      });
+    }
+
+    document.getElementById('predict-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const place = document.getElementById('place-select').value;
+      const hour = document.getElementById('hour-input').value;
+      const day = document.getElementById('dow-input').value;
+      const res = await fetch(`${API_BASE}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ place, hour: +hour, day_of_week: +day })
+      });
+      const data = await res.json();
+      document.getElementById('predict-result').innerHTML = `
+        <div class="p-3 border border-slate-700 rounded bg-black/20">
+          <b>Prediction:</b> ${data.predicted_crime}<br>
+          <b>Risk:</b> ${data.risk_score}<br>
+          <b>Confidence:</b> ${data.confidence}%
+        </div>`;
+    });
+
+    document.getElementById('route-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const src = document.getElementById('src-select').value;
+      const dst = document.getElementById('dst-select').value;
+      const res = await fetch(`${API_BASE}/safe-route`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ src, dst })
+      });
+      const data = await res.json();
+      routeLayer.clearLayers();
+      if (data.route) {
+        const latlngs = data.route.map(p => [p.lat, p.lng]);
+        L.polyline(latlngs, { color: '#00d1ff', weight: 5 }).addTo(routeLayer);
+        map.fitBounds(latlngs);
+      }
+      document.getElementById('route-result').innerHTML =
+        `<div class='p-3 border border-slate-700 rounded bg-black/20'>
+          <b>Estimated Risk:</b> ${data.estimated_risk}<br>${data.note || ''}
+        </div>`;
+    });
+
+    // Page switching
+    function switchTab(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active'));
+      document.getElementById('btn-' + id.split('-')[1]).classList.add('tab-active');
+    }
+    ['dashboard', 'heatmap', 'predict', 'safe-route'].forEach(tab => {
+      document.getElementById('btn-' + tab).onclick = () => {
+        switchTab('page-' + tab);
+        if (tab === 'heatmap') loadHeatmap();
+      };
+    });
+
+    window.addEventListener('load', () => {
+      initMap();
+      loadPlaces();
+      loadDashboard();
+    });
+  </script>
+</body>
+</html>
