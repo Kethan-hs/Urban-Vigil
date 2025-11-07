@@ -410,7 +410,9 @@
   <script>
     AOS.init({ duration: 600, once: true, offset: 50 });
     
-    const API_BASE = "https://urban-vigil.onrender.com";
+    const API_BASE = "https://urban-vigil.onrender.com/api";
+
+
     let map, routeMap, markersLayer, routeLayer;
     let charts = {};
     
@@ -951,12 +953,12 @@
       showNotification('Urban Vigil Pro initialized', 'success');
     });
     
-    // PWA - Service Worker Registration
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(() => console.log('Service Worker registered'))
-        .catch(err => console.log('Service Worker registration failed:', err));
-    }
+    // // PWA - Service Worker Registration
+    // if ('serviceWorker' in navigator) {
+    //   navigator.serviceWorker.register('/sw.js')
+    //     .then(() => console.log('Service Worker registered'))
+    //     .catch(err => console.log('Service Worker registration failed:', err));
+    // }
   </script>
 </body>
 </html>
