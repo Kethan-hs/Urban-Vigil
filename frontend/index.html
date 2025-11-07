@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Urban Vigil — Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <nav class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between h-16">
+        <div class="flex">
+          <div class="flex-shrink-0 flex items-center">
+            <div class="text-xl font-bold text-indigo-600">Urban Vigil</div>
+            <div class="ml-3 text-sm text-gray-500">Bengaluru Safety Dashboard</div>
+          </div>
+          <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8 ml-8">
+            <a href="#" id="nav-dashboard" class="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Dashboard</a>
+            <a href="#" id="nav-heatmap" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Heatmap</a>
+            <a href="#" id="nav-predict" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Predict</a>
+            <a href="#" id="nav-safe-route" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Safe Route</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto p-6">
+    <section id="page-dashboard" class="page">
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-2xl font-semibold mb-4">Overview</h2>
+        <div id="dashboard-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        <div class="mt-6">
+          <h3 class="text-lg font-medium mb-2">Top 3 Risky Areas</h3>
+          <div id="top-3" class="space-y-2"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="page-heatmap" class="page hidden">
+      <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-2xl font-semibold mb-4">Heatmap (Risk Scores)</h2>
+        <div id="heatmap-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </div>
+    </section>
+
+    <section id="page-predict" class="page hidden">
+      <div class="bg-white shadow rounded-lg p-6 max-w-2xl">
+        <h2 class="text-2xl font-semibold mb-4">Predict Crime Risk</h2>
+        <form id="predict-form" class="space-y-4">
+          <label class="block">
+            <span class="text-sm font-medium">Place</span>
+            <select id="place-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+            </select>
+          </label>
+          <label class="block">
+            <span class="text-sm font-medium">Hour (0-23)</span>
+            <input id="hour-input" type="number" min="0" max="23" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+          </label>
+          <label class="block">
+            <span class="text-sm font-medium">Day of week (0=Mon ... 6=Sun)</span>
+            <input id="dow-input" type="number" min="0" max="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+          </label>
+          <div>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">Predict</button>
+          </div>
+        </form>
+        <div id="predict-result" class="mt-4"></div>
+      </div>
+    </section>
+
+    <section id="page-safe-route" class="page hidden">
+      <div class="bg-white shadow rounded-lg p-6 max-w-2xl">
+        <h2 class="text-2xl font-semibold mb-4">Safe Route Planner</h2>
+        <form id="route-form" class="space-y-4">
+          <label><span class="text-sm font-medium">Source</span>
+            <select id="src-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select>
+          </label>
+          <label><span class="text-sm font-medium">Destination</span>
+            <select id="dst-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select>
+          </label>
+          <div>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">Get Safe Route</button>
+          </div>
+        </form>
+        <div id="route-result" class="mt-4"></div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const API_BASE = window.API_BASE || "http://localhost:8080";
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+document.getElementById('nav-dashboard').addEventListener('click', (e)=>{ e.preventDefault(); showPage('page-dashboard'); loadDashboard(); });
+document.getElementById('nav-heatmap').addEventListener('click', (e)=>{ e.preventDefault(); showPage('page-heatmap'); loadHeatmap(); });
+document.getElementById('nav-predict').addEventListener('click', (e)=>{ e.preventDefault(); showPage('page-predict'); });
+document.getElementById('nav-safe-route').addEventListener('click', (e)=>{ e.preventDefault(); showPage('page-safe-route'); });
+
+async function fetchPlaces(){
+  const res = await fetch(API_BASE + "/place-list");
+  return await res.json();
+}
+
+async function loadPlacesToSelects(){
+  const data = await fetchPlaces();
+  const places = data.places;
+  const placeSelect = document.getElementById('place-select');
+  const src = document.getElementById('src-select');
+  const dst = document.getElementById('dst-select');
+  [placeSelect, src, dst].forEach(s=> s.innerHTML = '');
+  places.forEach(p=>{
+    const opt = document.createElement('option'); opt.value = p; opt.text = p; placeSelect.appendChild(opt);
+    const opt2 = opt.cloneNode(true); src.appendChild(opt2);
+    const opt3 = opt.cloneNode(true); dst.appendChild(opt3);
+  });
+}
+async function loadDashboard(){
+  const res = await fetch(API_BASE + "/dashboard");
+  const data = await res.json();
+  document.getElementById('dashboard-cards').innerHTML = `
+    <div class="p-4 border rounded"><div class="text-sm text-gray-500">Places monitored</div><div class="text-2xl font-bold">${data.places_monitored}</div></div>
+    <div class="p-4 border rounded"><div class="text-sm text-gray-500">Average risk</div><div class="text-2xl font-bold">${data.average_risk}</div></div>
+    <div class="p-4 border rounded"><div class="text-sm text-gray-500">Top 3 risky</div><div class="text-2xl font-bold">${data.top_3_risky.length}</div></div>
+  `;
+  const top = data.top_3_risky;
+  const topEl = document.getElementById('top-3');
+  topEl.innerHTML = '';
+  top.forEach(t=>{
+    topEl.innerHTML += `<div class="p-3 border rounded flex justify-between"><div><div class="font-semibold">${t.place}</div><div class="text-sm text-gray-500">Risk: ${t.risk_score}</div></div></div>`;
+  });
+}
+
+async function loadHeatmap(){
+  const res = await fetch(API_BASE + "/heatmap");
+  const data = await res.json();
+  const list = document.getElementById('heatmap-list');
+  list.innerHTML = '';
+  data.heatmap.forEach(h=>{
+    list.innerHTML += `<div class="p-4 border rounded"><div class="font-semibold">${h.place}</div><div class="text-sm text-gray-500">Risk: ${h.risk_score}</div></div>`;
+  });
+}
+
+document.getElementById('predict-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const place = document.getElementById('place-select').value;
+  const hour = document.getElementById('hour-input').value ? parseInt(document.getElementById('hour-input').value) : null;
+  const dow = document.getElementById('dow-input').value ? parseInt(document.getElementById('dow-input').value) : null;
+  const payload = {place};
+  if(hour !== null) payload.hour = hour;
+  if(dow !== null) payload.day_of_week = dow;
+  const res = await fetch(API_BASE + "/predict", {method:"POST",headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)});
+  const data = await res.json();
+  document.getElementById('predict-result').innerHTML = `<div class="p-4 border rounded"><div class="font-semibold">Predicted: ${data.predicted_crime}</div><div class="text-sm">Confidence: ${data.confidence}%</div><div class="text-sm">Risk score: ${data.risk_score}</div></div>`;
+});
+
+document.getElementById('route-form').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const src = document.getElementById('src-select').value;
+  const dst = document.getElementById('dst-select').value;
+  const res = await fetch(API_BASE + "/safe-route", {method:"POST",headers:{"Content-Type":"application/json"}, body: JSON.stringify({src, dst})});
+  const data = await res.json();
+  document.getElementById('route-result').innerHTML = `<div class="p-4 border rounded"><div class="font-semibold">Route: ${data.route.join(' → ')}</div><div class="text-sm">Estimated risk: ${data.estimated_risk}</div><div class="text-sm">Note: ${data.note || ''}</div></div>`;
+});
+
+window.addEventListener('load', async ()=>{
+  await loadPlacesToSelects();
+  loadDashboard();
+});
+</script>
+</body>
+</html>

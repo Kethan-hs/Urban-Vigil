@@ -1,0 +1,14 @@
+Backend folder analysis report
+
+Location analyzed: /mnt/data/backend_unzipped
+Total files: 5
+Total size (bytes): 11072584
+Frameworks detected: FastAPI (Python)
+Routes found (count): 8
+DB hints: No DB hints detected
+ML artifacts: 1 found
+Files that may contain secrets or environment variables (scan): 0
+
+Top-level key files detected:
+- requirements.txt: requirements.txt
+- main.py: main.py
