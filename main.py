@@ -127,7 +127,7 @@ def build_location_cache():
     grouped = crime_data.groupby(['lat_bin', 'lon_bin']).agg({
         'type': ['count', lambda x: x.mode()[0] if len(x) > 0 else 'Unknown'],
         'hour': 'mean',
-        'police_stat': lambda x: x.mode()[0] if len(x) > 0 else 'Unknown'
+        'police_station': lambda x: x.mode()[0] if len(x) > 0 else 'Unknown'
     }).reset_index()
     
     grouped.columns = ['lat', 'lon', 'crime_count', 'most_common_crime', 'avg_hour', 'police_station']
