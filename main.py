@@ -13,7 +13,7 @@ import pandas as pd
 # ==================== CONFIG ====================
 APP_TITLE = "Urban Vigil Pro - AI-Powered Safety Platform"
 MODEL_PATH = os.getenv("MODEL_PATH", "crime_predictor_bangalore_new.pkl")
-DATA_PATH = os.getenv("DATA_PATH", "crime_data.csv")  # Your dataset
+DATA_PATH = os.getenv("DATA_PATH", "bengaluru_dataset.csv")  # Your dataset
 CACHE_DURATION = 300  # 5 minutes cache
 
 app = FastAPI(title=APP_TITLE, version="2.0")
