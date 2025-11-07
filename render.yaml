@@ -1,7 +1,16 @@
 services:
   - type: web
-    name: urban-vigil-api
+    name: urban-vigil-pro
     env: python
+    runtime: python-3.11
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port 8080
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: MODEL_PATH
+        value: crime_predictor_bangalore_new.pkl
+      - key: DATA_PATH
+        value: crime_data.csv
+    healthCheckPath: /api/health
     plan: free
