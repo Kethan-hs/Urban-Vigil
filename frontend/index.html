@@ -1,87 +1,160 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Urban Vigil — Demo</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Urban Vigil Pro — Dashboard</title>
+
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- AOS for animations -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    :root {
+      --bg1: #0f172a;
+      --bg2: #050816;
+      --accent: #7c3aed;
+    }
+    body {
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.12), transparent 10%),
+                  radial-gradient(1000px 500px at 90% 90%, rgba(14,165,233,0.06), transparent 10%),
+                  linear-gradient(180deg, #020617 0%, #071028 100%);
+      min-height: 100vh;
+      color: #e6eef8;
+    }
+
+    #map { height: 520px; border-radius: 12px; box-shadow: 0 8px 30px rgba(2,6,23,0.6); }
+
+    .pulse {
+      width: 18px;
+      height: 18px;
+      background: rgba(124,58,237,1);
+      border-radius: 50%;
+      box-shadow: 0 0 0 rgba(124,58,237,0.7);
+      position: relative;
+      animation: pulse 2s infinite;
+      border: 2px solid rgba(255,255,255,0.9);
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(124,58,237,0.9); transform: scale(1); }
+      70% { box-shadow: 0 0 0 18px rgba(124,58,237,0); transform: scale(1.12); }
+      100% { box-shadow: 0 0 0 0 rgba(124,58,237,0); transform: scale(1); }
+    }
+
+    .glass {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.04);
+      backdrop-filter: blur(6px);
+    }
+
+    .legend {
+      background: rgba(0,0,0,0.45);
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .risk-marker {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(0,0,0,0.4);
+      box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+    }
+
+    .tab-active {
+      border-bottom: 2px solid rgba(124,58,237,0.9);
+      color: #fff;
+    }
+  </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
-  <nav class="bg-white shadow">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between h-16">
-        <div class="flex">
-          <div class="flex-shrink-0 flex items-center">
-            <div class="text-xl font-bold text-indigo-600">Urban Vigil</div>
-            <div class="ml-3 text-sm text-gray-500">Bengaluru Safety Dashboard</div>
-          </div>
-          <div class="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8 ml-8">
-            <a href="#" id="nav-dashboard" class="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Dashboard</a>
-            <a href="#" id="nav-heatmap" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Heatmap</a>
-            <a href="#" id="nav-predict" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Predict</a>
-            <a href="#" id="nav-safe-route" class="text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Safe Route</a>
-          </div>
-        </div>
+<body>
+  <nav class="w-full py-4 glass shadow-lg">
+    <div class="max-w-7xl mx-auto px-6 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <div class="text-2xl font-bold text-white">Urban Vigil Pro</div>
+        <div class="text-sm text-slate-300">Bengaluru Safety Dashboard</div>
+      </div>
+      <div class="flex items-center gap-4">
+        <button id="btn-dashboard" class="px-3 py-1 tab-active text-sm">Dashboard</button>
+        <button id="btn-heatmap" class="px-3 py-1 text-sm">Heatmap</button>
+        <button id="btn-predict" class="px-3 py-1 text-sm">Predict</button>
+        <button id="btn-safe-route" class="px-3 py-1 text-sm">Safe Route</button>
       </div>
     </div>
   </nav>
 
-  <main class="max-w-7xl mx-auto p-6">
-    <section id="page-dashboard" class="page">
-      <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-2xl font-semibold mb-4">Overview</h2>
-        <div id="dashboard-cards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-        <div class="mt-6">
-          <h3 class="text-lg font-medium mb-2">Top 3 Risky Areas</h3>
-          <div id="top-3" class="space-y-2"></div>
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <section id="page-dashboard" class="page" data-aos="fade-up">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="glass p-6 rounded-lg">
+          <h3 class="text-lg font-semibold mb-3">Overview</h3>
+          <div id="dashboard-cards" class="grid grid-cols-1 gap-3"></div>
+        </div>
+
+        <div class="glass p-6 rounded-lg lg:col-span-2">
+          <h3 class="text-lg font-semibold mb-3">City Safety Map</h3>
+          <div id="map" class="rounded-lg mb-4"></div>
+          <div class="flex items-center justify-between">
+            <div class="legend">
+              <div class="font-semibold">Risk legend</div>
+              <div class="flex items-center gap-2 mt-2">
+                <span style="background:#22c55e;width:14px;height:14px;display:inline-block;border-radius:50%;"></span><span class="text-sm ml-2">Low</span>
+                <span style="background:#f59e0b;width:14px;height:14px;display:inline-block;border-radius:50%;margin-left:8px;"></span><span class="text-sm ml-2">Medium</span>
+                <span style="background:#ef4444;width:14px;height:14px;display:inline-block;border-radius:50%;margin-left:8px;"></span><span class="text-sm ml-2">High</span>
+              </div>
+            </div>
+            <div class="text-sm text-slate-300">Map powered by OpenStreetMap • Leaflet</div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section id="page-heatmap" class="page hidden">
-      <div class="bg-white shadow rounded-lg p-6">
-        <h2 class="text-2xl font-semibold mb-4">Heatmap (Risk Scores)</h2>
+    <section id="page-heatmap" class="page hidden" data-aos="fade-up">
+      <div class="glass p-6 rounded-lg">
+        <h3 class="text-lg font-semibold mb-4">Risk Zones (List)</h3>
         <div id="heatmap-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
       </div>
     </section>
 
-    <section id="page-predict" class="page hidden">
-      <div class="bg-white shadow rounded-lg p-6 max-w-2xl">
-        <h2 class="text-2xl font-semibold mb-4">Predict Crime Risk</h2>
+    <section id="page-predict" class="page hidden" data-aos="fade-up">
+      <div class="glass p-6 rounded-lg max-w-2xl">
+        <h3 class="text-lg font-semibold mb-4">Predict Crime Risk</h3>
         <form id="predict-form" class="space-y-4">
-          <label class="block">
-            <span class="text-sm font-medium">Place</span>
-            <select id="place-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-            </select>
+          <label class="block text-sm">Place
+            <select id="place-select" class="mt-1 block w-full rounded-md bg-transparent border border-slate-700 p-2"></select>
           </label>
-          <label class="block">
-            <span class="text-sm font-medium">Hour (0-23)</span>
-            <input id="hour-input" type="number" min="0" max="23" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+          <label class="block text-sm">Hour (0-23)
+            <input id="hour-input" type="number" min="0" max="23" class="mt-1 block w-full rounded-md bg-transparent border border-slate-700 p-2" />
           </label>
-          <label class="block">
-            <span class="text-sm font-medium">Day of week (0=Mon ... 6=Sun)</span>
-            <input id="dow-input" type="number" min="0" max="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
+          <label class="block text-sm">Day of week (0=Mon ... 6=Sun)
+            <input id="dow-input" type="number" min="0" max="6" class="mt-1 block w-full rounded-md bg-transparent border border-slate-700 p-2" />
           </label>
-          <div>
-            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">Predict</button>
+          <div class="flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-indigo-600 rounded">Predict</button>
+            <button id="btn-clear" type="button" class="px-4 py-2 bg-gray-700 rounded">Clear</button>
           </div>
         </form>
         <div id="predict-result" class="mt-4"></div>
       </div>
     </section>
 
-    <section id="page-safe-route" class="page hidden">
-      <div class="bg-white shadow rounded-lg p-6 max-w-2xl">
-        <h2 class="text-2xl font-semibold mb-4">Safe Route Planner</h2>
-        <form id="route-form" class="space-y-4">
-          <label><span class="text-sm font-medium">Source</span>
-            <select id="src-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select>
-          </label>
-          <label><span class="text-sm font-medium">Destination</span>
-            <select id="dst-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select>
-          </label>
-          <div>
-            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">Get Safe Route</button>
+    <section id="page-safe-route" class="page hidden" data-aos="fade-up">
+      <div class="glass p-6 rounded-lg max-w-3xl">
+        <h3 class="text-lg font-semibold mb-4">Safe Route Planner</h3>
+        <form id="route-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <select id="src-select" class="p-2 bg-transparent border border-slate-700 rounded"></select>
+          <select id="dst-select" class="p-2 bg-transparent border border-slate-700 rounded"></select>
+          <div class="md:col-span-2 flex gap-3">
+            <button type="submit" class="px-4 py-2 bg-indigo-600 rounded">Get Safe Route</button>
+            <button id="btn-locate" type="button" class="px-4 py-2 bg-gray-700 rounded">Show My Location</button>
           </div>
         </form>
         <div id="route-result" class="mt-4"></div>
@@ -89,88 +162,218 @@
     </section>
   </main>
 
+  <footer class="max-w-7xl mx-auto px-6 py-6 text-sm text-slate-400">
+    Built for final-year demo • Urban Vigil Pro • &copy; 2025
+  </footer>
+
 <script>
+AOS.init({duration:800, once:true});
 const API_BASE = window.API_BASE || "http://localhost:8080";
 
-function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
+let map, markersLayer, routeLayer, userMarker;
+let heatData = []; // cached heatmap data
+
+function initMap() {
+  map = L.map('map', {zoomControl:true, attributionControl:false}).setView([12.97, 77.59], 11);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors & CartoDB'
+  }).addTo(map);
+
+  markersLayer = L.layerGroup().addTo(map);
+  routeLayer = L.layerGroup().addTo(map);
 }
 
-document.getElementById('nav-dashboard').addEventListener('click', (e)=>{ e.preventDefault(); showPage('page-dashboard'); loadDashboard(); });
-document.getElementById('nav-heatmap').addEventListener('click', (e)=>{ e.preventDefault(); showPage('page-heatmap'); loadHeatmap(); });
-document.getElementById('nav-predict').addEventListener('click', (e)=>{ e.preventDefault(); showPage('page-predict'); });
-document.getElementById('nav-safe-route').addEventListener('click', (e)=>{ e.preventDefault(); showPage('page-safe-route'); });
-
-async function fetchPlaces(){
-  const res = await fetch(API_BASE + "/place-list");
-  return await res.json();
+function colorForRisk(r) {
+  if (r >= 70) return '#ef4444';
+  if (r >= 45) return '#f59e0b';
+  return '#22c55e';
 }
 
-async function loadPlacesToSelects(){
-  const data = await fetchPlaces();
-  const places = data.places;
-  const placeSelect = document.getElementById('place-select');
-  const src = document.getElementById('src-select');
-  const dst = document.getElementById('dst-select');
-  [placeSelect, src, dst].forEach(s=> s.innerHTML = '');
-  places.forEach(p=>{
-    const opt = document.createElement('option'); opt.value = p; opt.text = p; placeSelect.appendChild(opt);
-    const opt2 = opt.cloneNode(true); src.appendChild(opt2);
-    const opt3 = opt.cloneNode(true); dst.appendChild(opt3);
-  });
-}
-async function loadDashboard(){
-  const res = await fetch(API_BASE + "/dashboard");
+async function loadHeatmapIntoMap(hour=null, day_of_week=null) {
+  const q = [];
+  if (hour !== null) q.push(`hour=${hour}`);
+  if (day_of_week !== null) q.push(`day_of_week=${day_of_week}`);
+  const url = API_BASE + '/heatmap' + (q.length?('?'+q.join('&')):'');
+  const res = await fetch(url);
   const data = await res.json();
-  document.getElementById('dashboard-cards').innerHTML = `
-    <div class="p-4 border rounded"><div class="text-sm text-gray-500">Places monitored</div><div class="text-2xl font-bold">${data.places_monitored}</div></div>
-    <div class="p-4 border rounded"><div class="text-sm text-gray-500">Average risk</div><div class="text-2xl font-bold">${data.average_risk}</div></div>
-    <div class="p-4 border rounded"><div class="text-sm text-gray-500">Top 3 risky</div><div class="text-2xl font-bold">${data.top_3_risky.length}</div></div>
-  `;
-  const top = data.top_3_risky;
-  const topEl = document.getElementById('top-3');
-  topEl.innerHTML = '';
-  top.forEach(t=>{
-    topEl.innerHTML += `<div class="p-3 border rounded flex justify-between"><div><div class="font-semibold">${t.place}</div><div class="text-sm text-gray-500">Risk: ${t.risk_score}</div></div></div>`;
+  heatData = data.heatmap;
+  markersLayer.clearLayers();
+  data.heatmap.forEach(h=>{
+    const color = colorForRisk(h.risk_score);
+    const size = 8 + Math.min(26, Math.round(h.risk_score/4));
+    const el = L.divIcon({className:'', html:`<div class="risk-marker" style="background:${color};width:${size}px;height:${size}px;border-radius:50%;"></div>`, iconSize:[size,size]});
+    const marker = L.marker([h.lat, h.lon], {icon: el}).addTo(markersLayer);
+    marker.bindPopup(`<div class="p-2"><b>${h.place}</b><br/>Risk: ${h.risk_score}</div>`);
   });
+  if (data.heatmap.length) {
+    const bounds = data.heatmap.map(x=>[x.lat, x.lon]);
+    map.fitBounds(bounds, {padding:[60,60]});
+  }
 }
 
-async function loadHeatmap(){
-  const res = await fetch(API_BASE + "/heatmap");
+async function loadHeatmapList() {
+  const res = await fetch(API_BASE + '/heatmap');
   const data = await res.json();
   const list = document.getElementById('heatmap-list');
   list.innerHTML = '';
   data.heatmap.forEach(h=>{
-    list.innerHTML += `<div class="p-4 border rounded"><div class="font-semibold">${h.place}</div><div class="text-sm text-gray-500">Risk: ${h.risk_score}</div></div>`;
+    list.innerHTML += `<div class="p-4 border rounded bg-black/30"><div class="font-semibold">${h.place}</div><div class="text-sm text-slate-300">Risk: ${h.risk_score}</div></div>`;
   });
+}
+
+async function loadPlacesToSelects() {
+  const res = await fetch(API_BASE + '/place-list');
+  const json = await res.json();
+  const places = json.places;
+  ['place-select','src-select','dst-select'].forEach(id=>{
+    const el = document.getElementById(id);
+    el.innerHTML = '';
+    places.forEach(p=>{
+      const opt = document.createElement('option'); opt.value = p; opt.text = p; el.appendChild(opt);
+    });
+  });
+}
+
+async function loadDashboard() {
+  const res = await fetch(API_BASE + '/dashboard');
+  const data = await res.json();
+  const cards = document.getElementById('dashboard-cards');
+  cards.innerHTML = `
+    <div class="p-4 border rounded bg-black/20"><div class="text-sm text-slate-300">Places monitored</div><div class="text-2xl font-bold">${data.places_monitored}</div></div>
+    <div class="p-4 border rounded bg-black/20"><div class="text-sm text-slate-300">Average risk</div><div class="text-2xl font-bold">${data.average_risk}</div></div>
+    <div class="p-4 border rounded bg-black/20"><div class="text-sm text-slate-300">Top risky</div><div class="text-2xl font-bold">${data.top_3_risky.length}</div></div>
+  `;
+  await loadHeatmapIntoMap();
+}
+
+document.getElementById('btn-dashboard').addEventListener('click', ()=>{
+  switchTab('page-dashboard','btn-dashboard');
+});
+document.getElementById('btn-heatmap').addEventListener('click', ()=>{
+  switchTab('page-heatmap','btn-heatmap');
+  loadHeatmapList();
+});
+document.getElementById('btn-predict').addEventListener('click', ()=>{
+  switchTab('page-predict','btn-predict');
+});
+document.getElementById('btn-safe-route').addEventListener('click', ()=>{
+  switchTab('page-safe-route','btn-safe-route');
+});
+
+function switchTab(pageId, btnId) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+  document.getElementById(pageId).classList.remove('hidden');
+  ['btn-dashboard','btn-heatmap','btn-predict','btn-safe-route'].forEach(b=>{
+    document.getElementById(b).classList.remove('tab-active');
+  });
+  document.getElementById(btnId).classList.add('tab-active');
+  AOS.refresh();
 }
 
 document.getElementById('predict-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const place = document.getElementById('place-select').value;
-  const hour = document.getElementById('hour-input').value ? parseInt(document.getElementById('hour-input').value) : null;
-  const dow = document.getElementById('dow-input').value ? parseInt(document.getElementById('dow-input').value) : null;
-  const payload = {place};
-  if(hour !== null) payload.hour = hour;
-  if(dow !== null) payload.day_of_week = dow;
-  const res = await fetch(API_BASE + "/predict", {method:"POST",headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)});
+  const hourVal = document.getElementById('hour-input').value;
+  const dowVal = document.getElementById('dow-input').value;
+  const payload = { place };
+  if (hourVal !== '') payload.hour = parseInt(hourVal);
+  if (dowVal !== '') payload.day_of_week = parseInt(dowVal);
+  const res = await fetch(API_BASE + '/predict', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
   const data = await res.json();
-  document.getElementById('predict-result').innerHTML = `<div class="p-4 border rounded"><div class="font-semibold">Predicted: ${data.predicted_crime}</div><div class="text-sm">Confidence: ${data.confidence}%</div><div class="text-sm">Risk score: ${data.risk_score}</div></div>`;
+  document.getElementById('predict-result').innerHTML = `<div class="p-4 border rounded bg-black/20"><div class="font-semibold">Predicted: ${data.predicted_crime}</div><div class="text-sm text-slate-300">Confidence: ${data.confidence}%</div><div class="text-sm text-slate-300">Risk score: ${data.risk_score}</div></div>`;
+  const found = heatData.find(h=>h.place === place);
+  if (found) {
+    map.flyTo([found.lat, found.lon], 15, {duration:1.0});
+    L.popup().setLatLng([found.lat, found.lon]).setContent(`<b>${found.place}</b><br/>Risk: ${found.risk_score}`).openOn(map);
+  }
 });
 
 document.getElementById('route-form').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const src = document.getElementById('src-select').value;
   const dst = document.getElementById('dst-select').value;
-  const res = await fetch(API_BASE + "/safe-route", {method:"POST",headers:{"Content-Type":"application/json"}, body: JSON.stringify({src, dst})});
+  const res = await fetch(API_BASE + '/safe-route', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({src, dst}) });
   const data = await res.json();
-  document.getElementById('route-result').innerHTML = `<div class="p-4 border rounded"><div class="font-semibold">Route: ${data.route.join(' → ')}</div><div class="text-sm">Estimated risk: ${data.estimated_risk}</div><div class="text-sm">Note: ${data.note || ''}</div></div>`;
+  document.getElementById('route-result').innerHTML = `<div class="p-4 border rounded bg-black/20"><div class="font-semibold">Route: ${data.route.join(' → ')}</div><div class="text-sm text-slate-300">Estimated risk: ${data.estimated_risk}</div><div class="text-sm text-slate-300">${data.note || ''}</div></div>`;
+  plotRouteOnMap(data.route);
 });
 
+document.getElementById('btn-locate').addEventListener('click', async (e)=>{
+  e.preventDefault();
+  locateUser();
+});
+
+
+async function plotRouteOnMap(routePlaces) {
+  routeLayer.clearLayers();
+  const coords = [];
+  routePlaces.forEach(p=>{
+    const found = heatData.find(h=>h.place === p);
+    if (found) coords.push([found.lon, found.lat]); // OSRM expects lon,lat
+  });
+  if (coords.length === 0) return;
+  // Build OSRM coordinates string: lon,lat;lon,lat;...
+  const coordStr = coords.map(c=>`${c[0]},${c[1]}`).join(';');
+  const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordStr}?overview=full&geometries=geojson`;
+  try {
+    const r = await fetch(osrmUrl);
+    const jr = await r.json();
+    if (jr.code !== 'Ok' || !jr.routes || jr.routes.length===0) {
+      // fallback to straight polyline
+      const straight = routePlaces.map(p=>{
+        const f = heatData.find(h=>h.place===p);
+        return f ? [f.lat, f.lon] : null;
+      }).filter(x=>x!==null);
+      const poly = L.polyline(straight, {color:'#7c3aed', weight:5, opacity:0.85}).addTo(routeLayer);
+      map.fitBounds(poly.getBounds(), {padding:[60,60]});
+      return;
+    }
+    const routeGeo = jr.routes[0].geometry;
+    const latlngs = routeGeo.coordinates.map(c=>[c[1], c[0]]); // convert to lat,lng
+    const poly = L.geoJSON(routeGeo, {style: {color:'#00d1ff', weight:5, opacity:0.9}}).addTo(routeLayer);
+    // add markers for route stops
+    routePlaces.forEach(p=>{
+      const found = heatData.find(h=>h.place===p);
+      if (found) L.circleMarker([found.lat, found.lon], {radius:6, color:'#fff', fillColor:'#7c3aed', fillOpacity:1, weight:2}).addTo(routeLayer);
+    });
+    map.fitBounds(poly.getBounds(), {padding:[60,60]});
+  } catch (err) {
+    console.error("OSRM route failed", err);
+    // fallback straight line
+    const straight = routePlaces.map(p=>{
+      const f = heatData.find(h=>h.place===p);
+      return f ? [f.lat, f.lon] : null;
+    }).filter(x=>x!==null);
+    const poly = L.polyline(straight, {color:'#7c3aed', weight:5, opacity:0.85}).addTo(routeLayer);
+    map.fitBounds(poly.getBounds(), {padding:[60,60]});
+  }
+}
+
+
+function locateUser() {
+  if (!navigator.geolocation) {
+    alert("Geolocation not available in your browser.");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition((pos)=>{
+    const lat = pos.coords.latitude, lon = pos.coords.longitude;
+    if (userMarker) {
+      userMarker.setLatLng([lat, lon]);
+    } else {
+      const el = L.divIcon({className:'', html:'<div class="pulse"></div>', iconSize:[24,24]});
+      userMarker = L.marker([lat, lon], {icon: el}).addTo(map).bindPopup("You are here");
+    }
+    map.flyTo([lat, lon], 14, {duration:1.0});
+  }, (err)=>{
+    alert("Location permission denied or unavailable.");
+  }, {enableHighAccuracy:true, timeout:8000});
+}
+
 window.addEventListener('load', async ()=>{
+  initMap();
   await loadPlacesToSelects();
-  loadDashboard();
+  await loadDashboard();
 });
 </script>
 </body>
