@@ -4,7 +4,6 @@
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import joblib, os, math, json, requests
 import numpy as np
@@ -49,7 +48,7 @@ def haversine(a, b):
     return R * 2 * math.atan2(math.sqrt(x), math.sqrt(1 - x))
 
 def calculate_risk_score(lat, lon, hour=None, day_of_week=None):
-    """Compute a heuristic safety risk score."""
+    """Compute heuristic safety risk score."""
     base = 30.0
     nearest, min_dist = None, 1e9
     for v in location_cache.values():
@@ -79,7 +78,7 @@ def calculate_risk_score(lat, lon, hour=None, day_of_week=None):
     return max(0, min(100, round(base, 1)))
 
 def build_cache(df):
-    """Create location crime cache for nearby risk estimation."""
+    """Cache for nearby risk estimation."""
     global location_cache
     df['lat_bin'] = (df['Latitude'] * 100).round() / 100
     df['lon_bin'] = (df['Longitude'] * 100).round() / 100
@@ -122,12 +121,29 @@ def safe_loads():
         print(f"✅ Loaded {len(crime_mapping)} crime mappings.")
     except Exception as e:
         print(f"⚠️ Failed to load crime mapping: {e}")
+
+    # ---- FIXED PLACE LOOKUP LOADING ----
     try:
         place_lookup_df = pd.read_csv(PLACE_LOOKUP_PATH)
-        print(f"✅ Loaded {len(place_lookup_df)} places from lookup.")
+        for col in place_lookup_df.columns:
+            if any(keyword in col.lower() for keyword in ["police", "station", "stat"]):
+                place_lookup_df = place_lookup_df.rename(columns={col: "Place"})
+                break
+
+        rename_map = {}
+        for c in place_lookup_df.columns:
+            if "lat" in c.lower():
+                rename_map[c] = "Latitude"
+            elif "lon" in c.lower():
+                rename_map[c] = "Longitude"
+        if rename_map:
+            place_lookup_df = place_lookup_df.rename(columns=rename_map)
+
+        print(f"✅ Loaded {len(place_lookup_df)} places from lookup with standardized columns: {list(place_lookup_df.columns)}")
     except Exception as e:
         print(f"⚠️ Failed to load place lookup: {e}")
-        place_lookup_df = pd.DataFrame()
+        place_lookup_df = pd.DataFrame(columns=["Place", "Latitude", "Longitude"])
+
     try:
         crime_df = pd.read_csv(CRIME_DATA_PATH)
         build_cache(crime_df)
@@ -166,17 +182,14 @@ def predict_api(
     if not (place or (lat and lon)):
         raise HTTPException(status_code=400, detail="Provide either place+time or lat+lon")
 
-    # Use current time if not provided
     now = datetime.now().strftime("%H:%M")
     query_time = time or now
     query_place = place
 
-    # Handle lat/lon → place mapping
     if not query_place and lat and lon:
         nearest_idx = ((place_lookup_df["Latitude"] - lat)**2 + (place_lookup_df["Longitude"] - lon)**2).idxmin()
         query_place = place_lookup_df.iloc[nearest_idx]["Place"]
 
-    # Prepare input for model
     hour = datetime.strptime(query_time, "%H:%M").hour
     part_of_day = (
         "Morning" if 5 <= hour < 12 else
