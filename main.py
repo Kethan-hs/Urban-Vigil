@@ -9,7 +9,7 @@ import pandas as pd
 from datetime import datetime
 
 APP_TITLE = "Urban Vigil Pro - API (OSRM Integrated)"
-MODELS_DIR = os.getenv("MODELS_DIR", "models")
+MODELS_DIR = os.getenv("MODELS_DIR", "model/models")
 MODEL_PATH = os.path.join(MODELS_DIR, os.getenv("MODEL_FILE", "Final_model.pkl"))
 PLACE_LOOKUP = os.path.join(MODELS_DIR, "place_lookup.csv")
 DATA_CSV = os.path.join(MODELS_DIR, "bengaluru_dataset.csv")
