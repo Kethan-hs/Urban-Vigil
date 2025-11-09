@@ -5,13 +5,13 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: '../public', // keep 'dist' if deploying separately on Vercel
+    outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
-      input: resolve(__dirname, 'index.html')
-    }
+      input: resolve(__dirname, 'index.html'),
+    },
   },
   server: {
-    port: 5173
-  }
+    port: 5173,
+  },
 })
