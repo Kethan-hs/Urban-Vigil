@@ -196,11 +196,11 @@ def safe_loads():
 
     # crime csv
     try:
+        global location_cache  # ADD THIS LINE
         if os.path.exists(CRIME_CSV_PATH):
             dfc = pd.read_csv(CRIME_CSV_PATH)
             # normalize expected columns
             # common names may be: Police Station, Year, Type, Date, Time, Place, Latitude, Longitude, Date_fixed
-            # ensure lat/lon exist
             lat_col = next((c for c in dfc.columns if 'lat' in c.lower()), None)
             lon_col = next((c for c in dfc.columns if 'lon' in c.lower()), None)
             if lat_col:
@@ -211,6 +211,7 @@ def safe_loads():
             crime_df = dfc
             build_cache(crime_df)
             logger.info("✅ Crime data loaded: %d records, cache contains %d clusters.", len(crime_df), len(location_cache))
+
         else:
             logger.warning("⚠️ Crime CSV not found at %s", CRIME_CSV_PATH)
             crime_df = None
