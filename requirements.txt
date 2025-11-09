@@ -1,6 +1,8 @@
-fastapi
+fastapi==0.121.1
 uvicorn[standard]
 joblib
 pandas
 numpy
 requests
+xgboost
+scikit-learn
