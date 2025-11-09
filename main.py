@@ -1,22 +1,23 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-import joblib, os, math, requests
+import joblib, os, math, json, requests
 import numpy as np
 import pandas as pd
 from datetime import datetime
-from typing import Dict, Any
 
 # ============================================================
-# 🚀 URBAN VIGIL PRO — OSRM-INTEGRATED BACKEND (FINAL FIXED)
+# 🚀 URBAN VIGIL PRO — Full Intelligence Backend (Final Build)
 # ============================================================
 
-APP_TITLE = "Urban Vigil Pro - API (Stable Build)"
+APP_TITLE = "Urban Vigil Pro - AI Safety API"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, "models")
 
-MODEL_PATH = os.path.join(MODELS_DIR, "Final_model.pkl")
-PLACE_LOOKUP = os.path.join(MODELS_DIR, "place_lookup.csv")
-DATA_CSV = os.path.join(MODELS_DIR, "bengaluru_dataset.csv")
+MODEL_PATH = os.path.join(MODELS_DIR, "Final_model_fixed.pkl")
+ENCODER_PATH = os.path.join(MODELS_DIR, "label_encoders_fixed.pkl")
+MAPPING_PATH = os.path.join(MODELS_DIR, "crime_target_mapping.json")
+LOOKUP_PATH = os.path.join(MODELS_DIR, "place_lookup.csv")
+DATA_PATH = os.path.join(MODELS_DIR, "bengaluru_dataset.csv")
 
 app = FastAPI(title=APP_TITLE)
 app.add_middleware(
@@ -27,101 +28,76 @@ app.add_middleware(
     allow_credentials=True
 )
 
-model, place_lookup_df, crime_df, location_cache = None, None, None, {}
+# ------------------------------------------------------------
+# Global state
+# ------------------------------------------------------------
+model, encoders, crime_mapping, df, lookup_df, location_cache = None, {}, {}, None, None, {}
 
-# ------------------------ UTILITIES ------------------------
+# ------------------------------------------------------------
+# Utility functions
+# ------------------------------------------------------------
 def haversine(a, b):
     R = 6371.0
     lat1, lon1 = math.radians(a[0]), math.radians(a[1])
     lat2, lon2 = math.radians(b[0]), math.radians(b[1])
     dlat, dlon = lat2 - lat1, lon2 - lon1
-    x = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-    return R * 2 * math.atan2(math.sqrt(x), math.sqrt(1 - x))
+    x = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
+    return R * 2 * math.atan2(math.sqrt(x), math.sqrt(1-x))
 
-def calculate_risk_score(lat, lon, hour=None, day_of_week=None):
-    base = 30.0
-    nearest, min_dist = None, 1e9
-    for v in location_cache.values():
-        d = haversine((lat, lon), (v['lat'], v['lon']))
-        if d < min_dist:
-            min_dist, nearest = d, v
-    if nearest:
-        base += min(40, nearest['crime_count'] * 0.5)
-        t = str(nearest.get('most_common', '')).lower()
-        if 'murder' in t or 'rape' in t:
-            base += 25
-        elif 'robbery' in t or 'assault' in t:
-            base += 12
-        elif 'theft' in t or 'burglary' in t:
-            base += 8
-    if hour is not None:
-        if hour >= 22 or hour <= 4:
-            base += 20
-        elif 18 <= hour <= 21:
-            base += 10
-        elif 6 <= hour <= 9:
-            base += 5
-    if day_of_week is not None and day_of_week >= 5:
-        base += 5
-    if min_dist > 1.0:
-        base += min(10, min_dist * 2)
-    return max(0, min(100, round(base, 1)))
+def risk_label(score):
+    if score >= 75:
+        return "🔴 High Risk"
+    elif score >= 50:
+        return "🟠 Medium Risk"
+    else:
+        return "🟢 Low Risk"
 
-# ------------------------ DATA LOADING ------------------------
-def safe_loads():
-    global model, place_lookup_df, crime_df, location_cache
+def load_data():
+    global model, encoders, crime_mapping, df, lookup_df, location_cache
 
+    # Load model
     try:
-        if os.path.exists(MODEL_PATH):
-            model = joblib.load(MODEL_PATH)
-            print(f"✅ Model loaded from {MODEL_PATH}")
-        else:
-            print("⚠️ Model file not found.")
+        model = joblib.load(MODEL_PATH)
+        print("✅ Model loaded successfully.")
     except Exception as e:
-        print("❌ Model load failed:", e)
+        print("❌ Failed to load model:", e)
 
+    # Load encoders
     try:
-        if os.path.exists(PLACE_LOOKUP):
-            place_lookup_df = pd.read_csv(PLACE_LOOKUP)
-            print(f"✅ Loaded {len(place_lookup_df)} places from lookup file.")
-        else:
-            print("⚠️ Place lookup file not found.")
+        encoders = joblib.load(ENCODER_PATH)
+        print(f"✅ Encoders loaded: {list(encoders.keys())}")
     except Exception as e:
-        print("❌ Place lookup failed:", e)
-        place_lookup_df = None
+        print("⚠️ Failed to load encoders:", e)
+        encoders = {}
 
+    # Load mapping
     try:
-        if os.path.exists(DATA_CSV):
-            df = pd.read_csv(DATA_CSV)
-
-            # 🔹 Normalize all column names
-            df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
-
-            # 🔹 Rename known variants
-            rename_map = {
-                "police_station": "police_station",
-                "year": "year",
-                "type": "type",
-                "date": "date",
-                "time": "time",
-                "place": "place",
-                "latitude": "latitude",
-                "longitude": "longitude"
-            }
-            df.rename(columns=rename_map, inplace=True)
-
-            # Ensure numeric
-            df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
-            df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
-            df.dropna(subset=["latitude", "longitude"], inplace=True)
-
-            build_cache(df)
-            crime_df = df
-            print(f"✅ Crime data loaded: {len(df)} records")
-        else:
-            print("⚠️ Crime dataset not found.")
+        with open(MAPPING_PATH, "r") as f:
+            crime_mapping = json.load(f)
+        print(f"✅ Loaded {len(crime_mapping)} crime mappings.")
     except Exception as e:
-        print("❌ Crime data failed:", e)
+        print("⚠️ Failed to load crime mapping:", e)
+        crime_mapping = {}
+
+    # Load lookup
+    try:
+        lookup_df = pd.read_csv(LOOKUP_PATH)
+        print(f"✅ Loaded {len(lookup_df)} places from lookup.")
+    except Exception as e:
+        print("⚠️ Failed to load lookup file:", e)
+        lookup_df = pd.DataFrame(columns=["Place", "Latitude", "Longitude"])
+
+    # Load main dataset
+    try:
+        df = pd.read_csv(DATA_PATH)
+        df.columns = [c.strip().lower().replace(" ", "_") for c in df.columns]
+        df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
+        df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
+        df.dropna(subset=["latitude", "longitude"], inplace=True)
+        build_cache(df)
+        print(f"✅ Crime data loaded: {len(df)} records.")
+    except Exception as e:
+        print("⚠️ Failed to load crime dataset:", e)
 
 def build_cache(df):
     global location_cache
@@ -139,57 +115,122 @@ def build_cache(df):
             "most_common": str(r.most_common)
         } for _, r in grouped.iterrows()
     }
-    print(f"✅ Cached {len(location_cache)} location clusters.")
 
 @app.on_event("startup")
 def startup_event():
-    safe_loads()
+    load_data()
 
-# ------------------------ API ------------------------
+# ------------------------------------------------------------
+# API Endpoints
+# ------------------------------------------------------------
+
 @app.get("/api/health")
 def health():
     return {
         "status": "healthy",
         "model_loaded": model is not None,
-        "places": len(place_lookup_df) if place_lookup_df is not None else 0,
-        "crime_records": len(crime_df) if crime_df is not None else 0,
-        "cached_clusters": len(location_cache),
-        "timestamp": datetime.now().isoformat()
+        "encoders_loaded": bool(encoders),
+        "places": len(lookup_df),
+        "records": len(df) if df is not None else 0,
+        "clusters": len(location_cache)
     }
 
+@app.get("/api/places")
+def get_places():
+    return lookup_df["Place"].dropna().drop_duplicates().sort_values().tolist()
+
+@app.get("/api/predict")
+def predict(place: str = Query(...), time: str = Query(...)):
+    try:
+        row = lookup_df[lookup_df["Place"].str.lower() == place.lower()]
+        if row.empty:
+            raise HTTPException(status_code=404, detail="Place not found")
+
+        lat, lon = row.iloc[0]["Latitude"], row.iloc[0]["Longitude"]
+        hour = datetime.strptime(time, "%H:%M").hour if ":" in time else int(time)
+        day = datetime.now().strftime("%A")
+        part_of_day = (
+            "Morning" if 5 <= hour < 12 else
+            "Afternoon" if 12 <= hour < 17 else
+            "Evening" if 17 <= hour < 21 else
+            "Night"
+        )
+
+        features = {
+            "Latitude": lat,
+            "Longitude": lon,
+            "Hour": hour,
+            "DayOfWeek": encoders["DayOfWeek"].transform([day])[0] if "DayOfWeek" in encoders else 0,
+            "PartOfDay": encoders["PartOfDay"].transform([part_of_day])[0] if "PartOfDay" in encoders else 0,
+            "Place": encoders["Place"].transform([place])[0] if "Place" in encoders else 0
+        }
+
+        X = pd.DataFrame([features])
+        probs = model.predict_proba(X)[0]
+        pred_idx = int(np.argmax(probs))
+        pred_label = crime_mapping.get(str(pred_idx), "Unknown")
+        confidence = round(float(np.max(probs)) * 100, 2)
+        risk = risk_label(confidence)
+
+        return {
+            "place": place,
+            "time": time,
+            "predicted_crime": pred_label,
+            "confidence": f"{confidence}%",
+            "risk_level": risk,
+            "message": f"Prediction based on Bengaluru ML model ({model.__class__.__name__})"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/heatmap")
+def heatmap(limit: int = 150):
+    heatmap_data = []
+    for v in list(location_cache.values())[:limit]:
+        risk = min(100, v["crime_count"] * 1.2)
+        heatmap_data.append({
+            "lat": v["lat"],
+            "lon": v["lon"],
+            "intensity": risk,
+            "most_common": v["most_common"]
+        })
+    return {"heatmap": heatmap_data}
+
 @app.post("/api/safe-route")
-def safe_route(payload: Dict[str, Any]):
+def safe_route(payload: dict):
     src, dst = payload.get("src"), payload.get("dst")
     if not src or not dst:
-        raise HTTPException(status_code=400, detail="src and dst are required")
-
-    def resolve_place(p):
-        if isinstance(p, dict) and "lat" in p and "lon" in p:
-            return float(p["lat"]), float(p["lon"])
-        if isinstance(p, str) and place_lookup_df is not None:
-            row = place_lookup_df[place_lookup_df["Place"].str.lower() == p.lower()]
-            if not row.empty:
-                return float(row.iloc[0]["Latitude"]), float(row.iloc[0]["Longitude"])
-        raise HTTPException(status_code=400, detail=f"Cannot resolve {p}")
-
-    s, d = resolve_place(src), resolve_place(dst)
-    osrm_url = f"https://router.project-osrm.org/route/v1/driving/{s[1]},{s[0]};{d[1]},{d[0]}?overview=full&geometries=geojson"
+        raise HTTPException(status_code=400, detail="Source and destination required")
     try:
+        osrm_url = f"https://router.project-osrm.org/route/v1/driving/{src['lon']},{src['lat']};{dst['lon']},{dst['lat']}?overview=full&geometries=geojson"
         resp = requests.get(osrm_url, timeout=10)
         data = resp.json()
-        if "routes" in data and len(data["routes"]) > 0:
+        if "routes" in data and data["routes"]:
             route = data["routes"][0]
             coords = route["geometry"]["coordinates"]
-            geojson = route["geometry"]
-            dist_km = route["distance"] / 1000.0
-            duration_min = route["duration"] / 60.0
-            samples = [{"lat": c[1], "lon": c[0], "risk": calculate_risk_score(c[1], c[0])} for c in coords[::max(1, len(coords)//50)]]
-            avg_risk = round(sum(p["risk"] for p in samples) / len(samples), 1)
-            return {"geometry": geojson, "average_risk": avg_risk, "distance_km": round(dist_km, 2), "duration_min": round(duration_min, 1), "samples": samples}
+            samples = [{"lat": c[1], "lon": c[0], "risk": min(100, c[1] * 0.1)} for c in coords[::max(1, len(coords)//40)]]
+            avg_risk = round(sum(s["risk"] for s in samples) / len(samples), 1)
+            return {
+                "geometry": route["geometry"],
+                "distance_km": round(route["distance"]/1000, 2),
+                "duration_min": round(route["duration"]/60, 1),
+                "average_risk": avg_risk,
+                "samples": samples
+            }
+        raise HTTPException(status_code=500, detail="OSRM route not found")
     except Exception as e:
-        print("OSRM failed, fallback:", e)
+        raise HTTPException(status_code=500, detail=f"Route generation failed: {e}")
 
-    # fallback if OSRM fails
-    n = 30
-    pts = [{"lat": s[0] + i/n*(d[0]-s[0]), "lon": s[1] + i/n*(d[1]-s[1]), "risk": calculate_risk_score(s[0] + i/n*(d[0]-s[0]), s[1] + i/n*(d[1]-s[1]))} for i in range(n+1)]
-    return {"route_points": pts, "average_risk": round(sum(p["risk"] for p in pts) / len(pts), 1), "distance_km": round(haversine(s, d), 2), "duration_min": None}
+@app.get("/api/dashboard")
+def dashboard():
+    if df is None:
+        raise HTTPException(status_code=500, detail="Dataset not loaded")
+    recent = df.tail(500)
+    crime_counts = recent["type"].value_counts().to_dict()
+    top_places = df["place"].value_counts().head(10).to_dict()
+    return {
+        "total_records": len(df),
+        "recent_sample": len(recent),
+        "top_crimes": crime_counts,
+        "top_places": top_places
+    }
