@@ -3,44 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Urban Vigil Pro - AI Safety Intelligence</title>
+  <title>Urban Vigil Pro - Safety Intelligence</title>
   
-  <!-- Preconnect for performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://unpkg.com">
-  
-  <!-- Core Libraries -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
-    :root {
-      --primary: #7c3aed;
-      --secondary: #a855f7;
-      --accent: #ec4899;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --dark: #0f172a;
-      --glass-bg: rgba(255, 255, 255, 0.03);
-      --glass-border: rgba(255, 255, 255, 0.1);
-    }
-    
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0a0e27 100%);
       background-attachment: fixed;
       color: #e2e8f0;
       overflow-x: hidden;
-      min-height: 100vh;
     }
     
     body::before {
@@ -48,134 +29,87 @@
       position: fixed;
       inset: 0;
       background: 
-        radial-gradient(circle at 20% 30%, rgba(124,58,237,0.15), transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(14,165,233,0.12), transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(236,72,153,0.08), transparent 50%);
+        radial-gradient(circle at 20% 30%, rgba(59,130,246,0.1), transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(16,185,129,0.08), transparent 40%);
       pointer-events: none;
       z-index: 0;
-      animation: pulse-bg 15s ease-in-out infinite;
-    }
-    
-    @keyframes pulse-bg {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.8; }
     }
     
     main { position: relative; z-index: 1; }
     
     .glass {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(16px);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }
     
     .glass-strong {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(20px);
-    }
-    
-    .gradient-text {
-      background: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #06b6d4 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: gradient-shift 5s ease infinite;
-    }
-    
-    @keyframes gradient-shift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      backdrop-filter: blur(16px);
     }
     
     .btn {
       padding: 0.625rem 1.5rem;
       border-radius: 0.5rem;
       font-weight: 600;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .btn::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.2);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-    
-    .btn:hover::before {
-      width: 300px;
-      height: 300px;
+      transition: all 0.2s ease;
+      cursor: pointer;
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4);
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       color: white;
+      border: none;
     }
     
     .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(124, 58, 237, 0.6);
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     }
     
-    .btn-primary:active {
-      transform: translateY(0);
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
     
     #map, #route-map {
       height: 550px;
-      border-radius: 1rem;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      border: 2px solid rgba(124, 58, 237, 0.3);
-      overflow: hidden;
+      border-radius: 0.75rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(148, 163, 184, 0.2);
     }
     
     .stat-card {
-      transition: all 0.3s ease;
-      border-left: 4px solid transparent;
+      transition: all 0.2s ease;
       cursor: pointer;
     }
     
     .stat-card:hover {
-      transform: translateY(-4px) scale(1.02);
-      border-left-color: var(--secondary);
-      box-shadow: 0 12px 40px rgba(124, 58, 237, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     }
     
     .risk-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.25rem 0.75rem;
+      display: inline-block;
+      padding: 0.25rem 0.625rem;
       border-radius: 9999px;
       font-size: 0.75rem;
       font-weight: 600;
-      animation: pulse-badge 2s ease-in-out infinite;
     }
     
-    @keyframes pulse-badge {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.8; }
-    }
-    
-    .risk-low { background: linear-gradient(135deg, #10b981, #059669); color: white; }
-    .risk-medium { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
-    .risk-high { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+    .risk-low { background: #10b981; color: white; }
+    .risk-medium { background: #f59e0b; color: white; }
+    .risk-high { background: #ef4444; color: white; }
     
     .skeleton {
-      background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+      background: linear-gradient(90deg, rgba(148,163,184,0.1) 25%, rgba(148,163,184,0.2) 50%, rgba(148,163,184,0.1) 75%);
       background-size: 200% 100%;
       animation: loading 1.5s ease-in-out infinite;
-      border-radius: 0.5rem;
-      height: 1rem;
+      border-radius: 0.375rem;
+      height: 1.5rem;
     }
     
     @keyframes loading {
@@ -188,28 +122,21 @@
       top: 5rem;
       right: 1.5rem;
       z-index: 9999;
-      animation: slideInRight 0.3s ease-out;
+      animation: slideIn 0.3s ease-out;
       max-width: 24rem;
     }
     
-    @keyframes slideInRight {
-      from {
-        transform: translateX(400px);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
     
     .leaflet-popup-content-wrapper {
       background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(16px);
+      backdrop-filter: blur(12px);
       color: #e2e8f0;
-      border: 1px solid rgba(124, 58, 237, 0.3);
-      border-radius: 0.75rem;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 0.5rem;
     }
     
     .leaflet-popup-tip {
@@ -217,256 +144,222 @@
     }
     
     .tab-btn {
-      position: relative;
-      padding: 0.75rem 1.5rem;
+      padding: 0.625rem 1.25rem;
       border-radius: 0.5rem;
-      font-weight: 600;
-      transition: all 0.3s ease;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
     }
     
-    .tab-btn::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 50%;
-      width: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--primary), var(--accent));
-      transform: translateX(-50%);
-      transition: width 0.3s ease;
+    .tab-btn:hover {
+      background: rgba(59, 130, 246, 0.1);
+      color: #60a5fa;
     }
     
     .tab-btn.active {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       color: white;
-      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
-    }
-    
-    .tab-btn.active::after {
-      width: 100%;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
     }
     
     .input-field {
       width: 100%;
-      padding: 0.75rem 1rem;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 0.625rem 0.875rem;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.2);
       border-radius: 0.5rem;
       color: #e2e8f0;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
+      font-size: 0.875rem;
     }
     
     .input-field:focus {
       outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
-      background: rgba(255, 255, 255, 0.08);
-    }
-    
-    .marker-pulse {
-      animation: marker-pulse 2s ease-in-out infinite;
-    }
-    
-    @keyframes marker-pulse {
-      0%, 100% {
-        transform: scale(1);
-        opacity: 1;
-      }
-      50% {
-        transform: scale(1.1);
-        opacity: 0.8;
-      }
-    }
-    
-    @media (max-width: 768px) {
-      #map, #route-map { height: 400px; }
-      .notification { right: 1rem; max-width: calc(100vw - 2rem); }
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      background: rgba(15, 23, 42, 0.8);
     }
     
     .spinner {
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top: 3px solid var(--primary);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-top: 2px solid #3b82f6;
       border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      animation: spin 0.8s linear infinite;
+      width: 20px;
+      height: 20px;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
     }
     
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    
+    @media (max-width: 768px) {
+      #map, #route-map { height: 400px; }
+      .notification { right: 1rem; max-width: calc(100vw - 2rem); }
+    }
   </style>
 </head>
 
 <body>
   <!-- Navigation -->
-  <nav class="glass-strong sticky top-0 z-50 backdrop-blur-xl shadow-2xl">
-    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-6 py-4">
+  <nav class="glass-strong sticky top-0 z-50 backdrop-blur-xl shadow-lg">
+    <div class="max-w-7xl mx-auto flex items-center justify-between px-4 md:px-6 py-3">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
           <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
         </div>
         <div>
-          <h1 class="text-xl md:text-2xl font-bold gradient-text">Urban Vigil Pro</h1>
-          <p class="text-xs text-slate-400 hidden md:block">AI-Powered Safety Platform</p>
+          <h1 class="text-xl font-bold text-white">Urban Vigil Pro</h1>
+          <p class="text-xs text-slate-400 hidden md:block">AI Safety Intelligence</p>
         </div>
       </div>
       
-      <div class="flex gap-2">
-        <button id="nav-dashboard" class="tab-btn active text-sm">Dashboard</button>
-        <button id="nav-map" class="tab-btn text-sm">Map</button>
-        <button id="nav-route" class="tab-btn text-sm hidden md:block">Route</button>
+      <div class="flex gap-1">
+        <button id="nav-dashboard" class="tab-btn active">Dashboard</button>
+        <button id="nav-map" class="tab-btn">Map</button>
+        <button id="nav-route" class="tab-btn hidden md:inline-block">Route</button>
       </div>
     </div>
   </nav>
 
-  <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
+  <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
     
     <!-- Dashboard Page -->
-    <section id="page-dashboard" class="space-y-6" data-aos="fade-up">
+    <section id="page-dashboard" class="space-y-6">
       
       <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Total Crimes -->
-        <div class="glass stat-card p-6 rounded-xl">
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass stat-card p-4 rounded-lg">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
           </div>
-          <div id="stat-total" class="text-3xl font-bold mb-1">
-            <div class="skeleton w-24"></div>
-          </div>
-          <p class="text-sm text-slate-400">Total Incidents</p>
+          <div id="stat-total" class="text-2xl font-bold mb-1"><div class="skeleton w-20"></div></div>
+          <p class="text-xs text-slate-400">Total Incidents</p>
         </div>
         
-        <!-- Monitored Areas -->
-        <div class="glass stat-card p-6 rounded-xl">
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="glass stat-card p-4 rounded-lg">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
           </div>
-          <div id="stat-areas" class="text-3xl font-bold mb-1">
-            <div class="skeleton w-20"></div>
-          </div>
-          <p class="text-sm text-slate-400">Monitored Areas</p>
+          <div id="stat-areas" class="text-2xl font-bold mb-1"><div class="skeleton w-16"></div></div>
+          <p class="text-xs text-slate-400">Areas Monitored</p>
         </div>
         
-        <!-- Average Risk -->
-        <div class="glass stat-card p-6 rounded-xl">
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="glass stat-card p-4 rounded-lg">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
           </div>
-          <div id="stat-avg-risk" class="text-3xl font-bold mb-1">
-            <div class="skeleton w-16"></div>
-          </div>
-          <p class="text-sm text-slate-400">Average Risk Score</p>
+          <div id="stat-avg-risk" class="text-2xl font-bold mb-1"><div class="skeleton w-14"></div></div>
+          <p class="text-xs text-slate-400">Avg Risk</p>
         </div>
         
-        <!-- Recent 30d -->
-        <div class="glass stat-card p-6 rounded-xl">
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="glass stat-card p-4 rounded-lg">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
             </div>
           </div>
-          <div id="stat-recent" class="text-3xl font-bold mb-1">
-            <div class="skeleton w-20"></div>
-          </div>
-          <p class="text-sm text-slate-400">Last 30 Days</p>
+          <div id="stat-recent" class="text-2xl font-bold mb-1"><div class="skeleton w-16"></div></div>
+          <p class="text-xs text-slate-400">Last 30 Days</p>
         </div>
       </div>
       
-      <!-- Main Content Grid -->
+      <!-- Main Grid -->
       <div class="grid lg:grid-cols-3 gap-6">
         
         <!-- High Risk Zones -->
-        <div class="lg:col-span-2 glass p-6 rounded-xl">
+        <div class="lg:col-span-2 glass p-5 rounded-lg">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-bold gradient-text">High Risk Zones</h2>
+            <h2 class="text-lg font-semibold text-white">High Risk Zones</h2>
             <span class="risk-badge risk-high text-xs">Live</span>
           </div>
           <div id="risk-zones-list" class="space-y-3">
-            <div class="skeleton h-20"></div>
-            <div class="skeleton h-20"></div>
-            <div class="skeleton h-20"></div>
+            <div class="skeleton h-16"></div>
+            <div class="skeleton h-16"></div>
+            <div class="skeleton h-16"></div>
           </div>
         </div>
         
         <!-- Emergency Contacts -->
-        <div class="glass p-6 rounded-xl">
-          <h2 class="text-xl font-bold mb-4 gradient-text">Emergency</h2>
+        <div class="glass p-5 rounded-lg">
+          <h2 class="text-lg font-semibold mb-4 text-white">Emergency</h2>
           <div class="space-y-2">
-            <a href="tel:100" class="flex items-center gap-3 p-3 glass-strong rounded-lg hover:bg-white/10 transition-all">
-              <div class="w-10 h-10 bg-gradient-to-br from-red-500 to-rose-600 rounded-lg flex items-center justify-center">
+            <a href="tel:100" class="flex items-center gap-3 p-3 glass-strong rounded-lg hover:bg-slate-700/30 transition-all">
+              <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
               </div>
-              <div class="flex-1">
+              <div>
                 <div class="font-semibold text-sm">Police</div>
-                <div class="text-purple-400 text-sm font-mono">100</div>
+                <div class="text-blue-400 text-sm font-mono">100</div>
               </div>
             </a>
             
-            <a href="tel:112" class="flex items-center gap-3 p-3 glass-strong rounded-lg hover:bg-white/10 transition-all">
-              <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
+            <a href="tel:112" class="flex items-center gap-3 p-3 glass-strong rounded-lg hover:bg-slate-700/30 transition-all">
+              <div class="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <div class="flex-1">
+              <div>
                 <div class="font-semibold text-sm">Emergency</div>
-                <div class="text-purple-400 text-sm font-mono">112</div>
+                <div class="text-blue-400 text-sm font-mono">112</div>
               </div>
             </a>
             
-            <a href="tel:1091" class="flex items-center gap-3 p-3 glass-strong rounded-lg hover:bg-white/10 transition-all">
-              <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg flex items-center justify-center">
+            <a href="tel:1091" class="flex items-center gap-3 p-3 glass-strong rounded-lg hover:bg-slate-700/30 transition-all">
+              <div class="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
-              <div class="flex-1">
+              <div>
                 <div class="font-semibold text-sm">Women Helpline</div>
-                <div class="text-purple-400 text-sm font-mono">1091</div>
+                <div class="text-blue-400 text-sm font-mono">1091</div>
               </div>
             </a>
             
-            <a href="tel:108" class="flex items-center gap-3 p-3 glass-strong rounded-lg hover:bg-white/10 transition-all">
-              <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+            <a href="tel:108" class="flex items-center gap-3 p-3 glass-strong rounded-lg hover:bg-slate-700/30 transition-all">
+              <div class="w-10 h-10 bg-cyan-500 rounded-lg flex items-center justify-center">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </div>
-              <div class="flex-1">
+              <div>
                 <div class="font-semibold text-sm">Ambulance</div>
-                <div class="text-purple-400 text-sm font-mono">108</div>
+                <div class="text-blue-400 text-sm font-mono">108</div>
               </div>
             </a>
           </div>
         </div>
       </div>
       
-      <!-- Crime Trends Chart -->
-      <div class="glass p-6 rounded-xl">
-        <h2 class="text-xl font-bold mb-4 gradient-text">Crime Distribution</h2>
-        <div style="position: relative; height: 300px;">
+      <!-- Crime Chart -->
+      <div class="glass p-5 rounded-lg">
+        <h2 class="text-lg font-semibold mb-4 text-white">Crime Distribution</h2>
+        <div style="position: relative; height: 280px;">
           <canvas id="crime-chart"></canvas>
         </div>
       </div>
@@ -474,13 +367,11 @@
     </section>
 
     <!-- Map Page -->
-    <section id="page-map" class="hidden space-y-6" data-aos="fade-up">
-      
+    <section id="page-map" class="hidden space-y-6">
       <div class="grid lg:grid-cols-4 gap-6">
         
-        <!-- Map Controls -->
-        <div class="glass p-6 rounded-xl space-y-4">
-          <h2 class="text-lg font-bold gradient-text">Risk Check</h2>
+        <div class="glass p-5 rounded-lg space-y-4">
+          <h2 class="text-lg font-semibold text-white">Risk Check</h2>
           
           <div>
             <label class="block text-sm text-slate-400 mb-2">Place</label>
@@ -489,7 +380,7 @@
             </select>
           </div>
           
-          <div class="text-center text-xs text-slate-500 my-2">OR</div>
+          <div class="text-center text-xs text-slate-500 my-1">OR</div>
           
           <div>
             <label class="block text-sm text-slate-400 mb-2">Latitude</label>
@@ -506,139 +397,107 @@
             <input id="map-time" type="time" class="input-field">
           </div>
           
-          <button id="btn-check-risk" class="btn btn-primary w-full">
-            <span class="relative z-10">Check Risk</span>
-          </button>
+          <button id="btn-check-risk" class="btn btn-primary w-full">Check Risk</button>
           
           <div id="map-result" class="hidden mt-4 p-4 glass-strong rounded-lg"></div>
           
-          <!-- Risk Legend -->
-          <div class="mt-6 pt-6 border-t border-white/10">
-            <h3 class="text-sm font-semibold mb-3">Risk Legend</h3>
-            <div class="space-y-2 text-sm">
+          <div class="mt-6 pt-4 border-t border-slate-700">
+            <h3 class="text-sm font-semibold mb-2">Risk Legend</h3>
+            <div class="space-y-2 text-xs">
               <div class="flex items-center gap-2">
-                <div class="w-4 h-4 rounded-full bg-green-500"></div>
+                <div class="w-3 h-3 rounded-full bg-green-500"></div>
                 <span>Low (0-40)</span>
               </div>
               <div class="flex items-center gap-2">
-                <div class="w-4 h-4 rounded-full bg-yellow-500"></div>
+                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
                 <span>Medium (40-70)</span>
               </div>
               <div class="flex items-center gap-2">
-                <div class="w-4 h-4 rounded-full bg-red-500"></div>
+                <div class="w-3 h-3 rounded-full bg-red-500"></div>
                 <span>High (70-100)</span>
               </div>
             </div>
           </div>
         </div>
         
-        <!-- Map Container -->
-        <div class="lg:col-span-3 glass p-4 rounded-xl">
+        <div class="lg:col-span-3 glass p-4 rounded-lg">
           <div id="map"></div>
         </div>
-        
       </div>
-      
     </section>
 
     <!-- Route Page -->
-    <section id="page-route" class="hidden space-y-6" data-aos="fade-up">
-      
+    <section id="page-route" class="hidden space-y-6">
       <div class="grid lg:grid-cols-3 gap-6">
         
-        <!-- Route Form -->
-        <div class="glass p-6 rounded-xl space-y-4">
-          <h2 class="text-lg font-bold gradient-text">Safe Route Planner</h2>
+        <div class="glass p-5 rounded-lg space-y-4">
+          <h2 class="text-lg font-semibold text-white">Safe Route</h2>
           
           <form id="route-form" class="space-y-4">
             <div>
-              <label class="block text-sm text-slate-400 mb-2">From (Source)</label>
+              <label class="block text-sm text-slate-400 mb-2">From</label>
               <select id="route-src" name="src" class="input-field" required>
                 <option value="">Select Source</option>
               </select>
             </div>
             
             <div>
-              <label class="block text-sm text-slate-400 mb-2">To (Destination)</label>
+              <label class="block text-sm text-slate-400 mb-2">To</label>
               <select id="route-dst" name="dst" class="input-field" required>
                 <option value="">Select Destination</option>
               </select>
             </div>
             
-            <button type="submit" class="btn btn-primary w-full">
-              <span class="relative z-10">Calculate Route</span>
-            </button>
+            <button type="submit" class="btn btn-primary w-full">Calculate Route</button>
           </form>
           
-          <div id="route-info" class="hidden mt-6 space-y-3"></div>
+          <div id="route-info" class="hidden mt-4"></div>
         </div>
         
-        <!-- Route Map -->
-        <div class="lg:col-span-2 glass p-4 rounded-xl">
+        <div class="lg:col-span-2 glass p-4 rounded-lg">
           <div id="route-map"></div>
         </div>
-        
       </div>
-      
     </section>
 
   </main>
 
-  <!-- Footer -->
-  <footer class="glass mt-16 py-8 border-t border-white/10">
+  <footer class="glass mt-12 py-6 border-t border-slate-700/50">
     <div class="max-w-7xl mx-auto px-6 text-center">
-      <p class="text-slate-400 text-sm">© 2025 Urban Vigil Pro | AI-Powered Safety Intelligence</p>
-      <p class="text-slate-500 text-xs mt-2">Built with ❤️ for safer communities in Bengaluru</p>
+      <p class="text-slate-400 text-sm">© 2025 Urban Vigil Pro | AI Safety Intelligence</p>
+      <p class="text-slate-500 text-xs mt-1">Built for safer communities</p>
     </div>
   </footer>
 
   <script>
-    // ==================== CONFIGURATION ====================
-    const API_BASE = window.location.origin.includes('localhost') 
-      ? 'http://localhost:8000/api' 
-      : '/api';
+    // API Configuration - FIXED for your backend
+    const API_BASE = '/api';  // This will work with your backend
     
-    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    console.log('🚀 API Base:', API_BASE);
     
-    // ==================== STATE ====================
+    // State management
     let state = {
       maps: { main: null, route: null },
       layers: { markers: null, routes: null },
       charts: { crime: null },
-      cache: { places: null, heatmap: null, dashboard: null },
+      cache: {},
       loading: new Set()
     };
     
-    // ==================== UTILITIES ====================
+    // Utilities
     function showNotification(message, type = 'info') {
       const colors = {
-        success: 'from-green-500 to-emerald-600',
-        error: 'from-red-500 to-rose-600',
-        warning: 'from-yellow-500 to-orange-600',
-        info: 'from-blue-500 to-cyan-600'
-      };
-      
-      const icon = {
-        success: 'M5 13l4 4L19 7',
-        error: 'M6 18L18 6M6 6l12 12',
-        warning: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
-        info: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-orange-500',
+        info: 'bg-blue-500'
       };
       
       const notif = document.createElement('div');
-      notif.className = 'notification glass-strong px-6 py-4 rounded-xl shadow-2xl';
-      notif.innerHTML = `
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-gradient-to-br ${colors[type]} rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${icon[type]}" />
-            </svg>
-          </div>
-          <p class="text-sm flex-1">${message}</p>
-        </div>
-      `;
+      notif.className = `notification glass-strong ${colors[type]} text-white px-5 py-3 rounded-lg shadow-xl`;
+      notif.innerHTML = `<p class="text-sm">${message}</p>`;
       document.body.appendChild(notif);
-      setTimeout(() => notif.remove(), 4000);
+      setTimeout(() => notif.remove(), 3000);
     }
     
     function getRiskColor(score) {
@@ -659,103 +518,72 @@
       return 'risk-high';
     }
     
-    async function fetchWithCache(url, cacheKey, duration = CACHE_DURATION) {
-      const cached = state.cache[cacheKey];
-      if (cached && Date.now() - cached.timestamp < duration) {
-        return cached.data;
-      }
-      
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = await response.json();
-      
-      state.cache[cacheKey] = { data, timestamp: Date.now() };
-      return data;
-    }
-    
-    function setLoading(key, isLoading) {
-      if (isLoading) {
-        state.loading.add(key);
-      } else {
-        state.loading.delete(key);
-      }
-    }
-    
-    // ==================== MAP INITIALIZATION ====================
+    // Initialize maps
     function initMaps() {
-      // Main map
       state.maps.main = L.map('map').setView([12.9716, 77.5946], 11);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
         maxZoom: 19
       }).addTo(state.maps.main);
       state.layers.markers = L.layerGroup().addTo(state.maps.main);
       
-      // Route map
       state.maps.route = L.map('route-map').setView([12.9716, 77.5946], 11);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
         maxZoom: 19
       }).addTo(state.maps.route);
       state.layers.routes = L.layerGroup().addTo(state.maps.route);
+      
+      console.log('✅ Maps initialized');
     }
     
-    // ==================== DATA LOADING ====================
+    // Load places from backend
     async function loadPlaces() {
       try {
-        const data = await fetchWithCache(`${API_BASE}/place-lookup`, 'places');
-        const places = Array.isArray(data) ? data : (data.places || []);
+        console.log('📍 Loading places...');
+        const res = await fetch(`${API_BASE}/place-lookup`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
-        // Populate all place dropdowns
+        const data = await res.json();
+        const places = Array.isArray(data) ? data : [];
+        
+        console.log('✅ Places loaded:', places.length);
+        
         ['map-place', 'route-src', 'route-dst'].forEach(id => {
           const select = document.getElementById(id);
-          if (select) {
-            select.innerHTML = `<option value="">Select ${id.includes('src') ? 'Source' : id.includes('dst') ? 'Destination' : 'Place'}</option>` +
-              places.map(p => `<option value="${p}">${p}</option>`).join('');
+          if (select && places.length) {
+            const options = places.map(p => `<option value="${p}">${p}</option>`).join('');
+            select.innerHTML += options;
           }
         });
         
         return places;
       } catch (error) {
-        console.error('Failed to load places:', error);
+        console.error('❌ Places load error:', error);
         showNotification('Failed to load places', 'error');
         return [];
       }
     }
     
+    // Load dashboard
     async function loadDashboard() {
       try {
-        setLoading('dashboard', true);
-        const data = await fetchWithCache(`${API_BASE}/dashboard`, 'dashboard', CACHE_DURATION);
+        console.log('📊 Loading dashboard...');
+        const res = await fetch(`${API_BASE}/dashboard`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
-        // Update stats with animation
-        const stats = {
-          'stat-total': data.total_crimes?.toLocaleString() || '0',
-          'stat-areas': data.cached_clusters || '0',
-          'stat-avg-risk': data.average_risk || '0',
-          'stat-recent': data.recent_crimes_30d?.toLocaleString() || '0'
-        };
+        const data = await res.json();
+        console.log('✅ Dashboard loaded:', data);
         
-        Object.entries(stats).forEach(([id, value]) => {
-          const el = document.getElementById(id);
-          if (el) {
-            el.innerHTML = value;
-            el.style.animation = 'none';
-            setTimeout(() => el.style.animation = 'pulse-badge 2s ease-in-out', 10);
-          }
-        });
+        document.getElementById('stat-total').textContent = (data.total_crimes || 0).toLocaleString();
+        document.getElementById('stat-areas').textContent = data.cached_clusters || 0;
+        document.getElementById('stat-avg-risk').textContent = data.average_risk || 0;
+        document.getElementById('stat-recent').textContent = (data.recent_crimes_30d || 0).toLocaleString();
         
-        // Render top risky zones
         renderRiskyZones(data.top_risky || []);
-        
-        // Load crime trends for chart
-        await loadCrimeTrends();
+        loadCrimeTrends();
         
       } catch (error) {
-        console.error('Dashboard load error:', error);
+        console.error('❌ Dashboard error:', error);
         showNotification('Failed to load dashboard', 'error');
-      } finally {
-        setLoading('dashboard', false);
       }
     }
     
@@ -770,21 +598,12 @@
       
       container.innerHTML = zones.map((zone, i) => {
         const color = getRiskColor(zone.risk_score);
-        const badgeClass = getRiskBadgeClass(zone.risk_score);
-        const gradients = [
-          'from-red-500 to-rose-600',
-          'from-orange-500 to-amber-600',
-          'from-yellow-500 to-orange-500',
-          'from-blue-500 to-cyan-500',
-          'from-purple-500 to-pink-500'
-        ];
+        const badge = getRiskBadgeClass(zone.risk_score);
         
         return `
-          <div class="glass-strong p-4 rounded-lg hover:bg-white/5 transition-all cursor-pointer" 
-               data-lat="${zone.lat}" data-lon="${zone.lon}">
+          <div class="glass-strong p-4 rounded-lg hover:bg-slate-700/30 transition-all cursor-pointer">
             <div class="flex items-center gap-4">
-              <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${gradients[i % gradients.length]} 
-                          flex items-center justify-center font-bold text-white shadow-lg">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center font-bold text-white text-sm">
                 ${i + 1}
               </div>
               <div class="flex-1 min-w-0">
@@ -792,43 +611,31 @@
                 <p class="text-xs text-slate-400">${zone.crime_count || 0} incidents</p>
               </div>
               <div class="text-right">
-                <div class="text-2xl font-bold" style="color: ${color}">${zone.risk_score}</div>
-                <span class="risk-badge ${badgeClass} text-xs mt-1">${getRiskLabel(zone.risk_score)}</span>
+                <div class="text-xl font-bold" style="color: ${color}">${zone.risk_score}</div>
+                <span class="risk-badge ${badge} text-xs mt-1">${getRiskLabel(zone.risk_score)}</span>
               </div>
             </div>
           </div>
         `;
       }).join('');
-      
-      // Add click handlers to zoom to location
-      container.querySelectorAll('[data-lat]').forEach(el => {
-        el.addEventListener('click', () => {
-          const lat = parseFloat(el.dataset.lat);
-          const lon = parseFloat(el.dataset.lon);
-          switchPage('map');
-          setTimeout(() => {
-            if (state.maps.main) {
-              state.maps.main.setView([lat, lon], 14);
-            }
-          }, 100);
-        });
-      });
     }
     
     async function loadHeatmap() {
       try {
-        setLoading('heatmap', true);
-        const data = await fetchWithCache(`${API_BASE}/heatmap?limit=500`, 'heatmap', CACHE_DURATION);
+        console.log('🗺️ Loading heatmap...');
+        const res = await fetch(`${API_BASE}/heatmap?limit=300`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        
+        const data = await res.json();
         const heatmap = data.heatmap || [];
         
+        console.log('✅ Heatmap loaded:', heatmap.length, 'points');
         renderHeatmapMarkers(heatmap);
         showNotification(`Loaded ${heatmap.length} risk zones`, 'success');
         
       } catch (error) {
-        console.error('Heatmap load error:', error);
+        console.error('❌ Heatmap error:', error);
         showNotification('Failed to load heatmap', 'error');
-      } finally {
-        setLoading('heatmap', false);
       }
     }
     
@@ -837,28 +644,23 @@
       
       state.layers.markers.clearLayers();
       
-      // Batch render for performance
-      const fragment = document.createDocumentFragment();
-      
       heatmap.forEach(point => {
         const color = getRiskColor(point.risk_score);
-        const size = Math.min(28, 12 + point.risk_score / 5);
+        const size = Math.min(24, 10 + point.risk_score / 6);
         
         const icon = L.divIcon({
-          className: 'marker-pulse',
-          html: `<div style="background:${color};width:${size}px;height:${size}px;border-radius:50%;
-                        border:3px solid rgba(255,255,255,0.9);box-shadow:0 4px 12px rgba(0,0,0,0.5)"></div>`,
+          className: '',
+          html: `<div style="background:${color};width:${size}px;height:${size}px;border-radius:50%;border:2px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>`,
           iconSize: [size, size]
         });
         
         const marker = L.marker([point.lat, point.lon], { icon })
           .bindPopup(`
-            <div class="p-3">
-              <div class="font-bold text-lg mb-2" style="color:${color}">Risk: ${point.risk_score}</div>
-              <div class="space-y-1 text-sm">
-                <div><span class="text-slate-400">Crime Count:</span> <b>${point.crime_count}</b></div>
-                <div><span class="text-slate-400">Most Common:</span> <b>${point.most_common}</b></div>
-                <div><span class="text-slate-400">Status:</span> <span class="risk-badge ${getRiskBadgeClass(point.risk_score)}">${getRiskLabel(point.risk_score)}</span></div>
+            <div class="p-2">
+              <div class="font-bold text-base mb-1" style="color:${color}">Risk: ${point.risk_score}</div>
+              <div class="text-sm space-y-1">
+                <div>Count: <b>${point.crime_count}</b></div>
+                <div>Type: <b>${point.most_common}</b></div>
               </div>
             </div>
           `);
@@ -866,18 +668,18 @@
         state.layers.markers.addLayer(marker);
       });
       
-      // Fit bounds if we have markers
       if (heatmap.length && state.maps.main) {
         const bounds = heatmap.map(p => [p.lat, p.lon]);
-        state.maps.main.fitBounds(bounds, { padding: [50, 50] });
+        state.maps.main.fitBounds(bounds, { padding: [40, 40] });
       }
     }
     
     async function loadCrimeTrends() {
       try {
-        const response = await fetch(`${API_BASE}/crime-trends`);
-        const data = await response.json();
+        const res = await fetch(`${API_BASE}/crime-trends`);
+        if (!res.ok) return;
         
+        const data = await res.json();
         renderCrimeChart(data.crime_types || {});
         
       } catch (error) {
@@ -891,13 +693,12 @@
       
       const ctx = canvas.getContext('2d');
       
-      // Destroy existing chart
       if (state.charts.crime) {
         state.charts.crime.destroy();
       }
       
-      const labels = Object.keys(crimeTypes);
-      const values = Object.values(crimeTypes);
+      const labels = Object.keys(crimeTypes).slice(0, 8);
+      const values = Object.values(crimeTypes).slice(0, 8);
       
       state.charts.crime = new Chart(ctx, {
         type: 'doughnut',
@@ -906,15 +707,10 @@
           datasets: [{
             data: values,
             backgroundColor: [
-              'rgba(239, 68, 68, 0.8)',
-              'rgba(245, 158, 11, 0.8)',
-              'rgba(59, 130, 246, 0.8)',
-              'rgba(16, 185, 129, 0.8)',
-              'rgba(168, 85, 247, 0.8)',
-              'rgba(236, 72, 153, 0.8)',
-              'rgba(6, 182, 212, 0.8)',
+              '#ef4444', '#f59e0b', '#3b82f6', '#10b981',
+              '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'
             ],
-            borderColor: 'rgba(255, 255, 255, 0.2)',
+            borderColor: 'rgba(255, 255, 255, 0.1)',
             borderWidth: 2
           }]
         },
@@ -926,26 +722,24 @@
               position: 'bottom',
               labels: {
                 color: '#e2e8f0',
-                padding: 15,
-                font: { size: 12, family: 'Inter' }
+                padding: 12,
+                font: { size: 11 }
               }
             },
             tooltip: {
               backgroundColor: 'rgba(15, 23, 42, 0.95)',
               titleColor: '#e2e8f0',
               bodyColor: '#e2e8f0',
-              borderColor: 'rgba(124, 58, 237, 0.5)',
-              borderWidth: 1,
-              padding: 12,
-              cornerRadius: 8
+              borderColor: 'rgba(59, 130, 246, 0.5)',
+              borderWidth: 1
             }
           }
         }
       });
     }
     
-    // ==================== RISK CHECK ====================
-    document.getElementById('btn-check-risk').addEventListener('click', async () => {
+    // Risk check
+    document.getElementById('btn-check-risk')?.addEventListener('click', async () => {
       const place = document.getElementById('map-place').value;
       const lat = document.getElementById('map-lat').value;
       const lon = document.getElementById('map-lon').value;
@@ -957,57 +751,58 @@
       }
       
       const btn = document.getElementById('btn-check-risk');
-      const originalText = btn.innerHTML;
+      const originalText = btn.textContent;
       
       try {
         btn.disabled = true;
-        btn.innerHTML = '<span class="relative z-10"><div class="spinner mx-auto"></div></span>';
+        btn.innerHTML = '<div class="spinner mx-auto"></div>';
         
         let url = `${API_BASE}/predict?`;
         if (place) url += `place=${encodeURIComponent(place)}&`;
         if (lat && lon) url += `lat=${lat}&lon=${lon}&`;
         if (time) url += `time=${encodeURIComponent(time)}`;
         
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Prediction failed');
+        console.log('🔍 Checking risk:', url);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
-        const data = await response.json();
+        const data = await res.json();
+        console.log('✅ Risk result:', data);
         
-        // Display result
         const resultDiv = document.getElementById('map-result');
         const color = getRiskColor(data.risk_score);
-        const badgeClass = getRiskBadgeClass(data.risk_score);
+        const badge = getRiskBadgeClass(data.risk_score);
         
         resultDiv.innerHTML = `
-          <div class="space-y-4">
-            <div class="flex items-center justify-between pb-3 border-b border-white/10">
-              <span class="text-sm text-slate-400">Risk Assessment</span>
+          <div class="space-y-3">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+              <span class="text-sm text-slate-400">Risk Score</span>
               <div class="text-3xl font-bold" style="color:${color}">${data.risk_score}</div>
             </div>
             
             <div class="space-y-2 text-sm">
-              <div class="flex justify-between items-center">
-                <span class="text-slate-400">Predicted Crime:</span>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Crime Type:</span>
                 <span class="font-semibold">${data.predicted_crime}</span>
               </div>
-              <div class="flex justify-between items-center">
+              <div class="flex justify-between">
                 <span class="text-slate-400">Confidence:</span>
-                <span class="font-semibold">${data.confidence?.toFixed(1)}%</span>
+                <span class="font-semibold">${data.confidence ? data.confidence.toFixed(1) + '%' : 'N/A'}</span>
               </div>
-              <div class="flex justify-between items-center">
+              <div class="flex justify-between">
                 <span class="text-slate-400">Status:</span>
-                <span class="risk-badge ${badgeClass}">${getRiskLabel(data.risk_score)}</span>
+                <span class="risk-badge ${badge}">${getRiskLabel(data.risk_score)}</span>
               </div>
             </div>
             
-            ${data.recommendations && data.recommendations.length ? `
-              <div class="pt-3 border-t border-white/10">
-                <h4 class="text-sm font-semibold mb-2 text-purple-300">Recommendations:</h4>
+            ${data.recommendations?.length ? `
+              <div class="pt-3 border-t border-slate-700">
+                <h4 class="text-sm font-semibold mb-2 text-blue-400">Recommendations:</h4>
                 <ul class="space-y-1 text-xs">
                   ${data.recommendations.map(r => `
                     <li class="flex items-start gap-2">
-                      <span class="text-purple-400 mt-0.5">•</span>
-                      <span class="text-slate-300">${r}</span>
+                      <span class="text-blue-400">•</span>
+                      <span>${r}</span>
                     </li>
                   `).join('')}
                 </ul>
@@ -1018,16 +813,13 @@
         
         resultDiv.classList.remove('hidden');
         
-        // Add marker to map
+        // Add marker
         if (data.latitude && data.longitude && state.maps.main) {
           state.layers.markers.clearLayers();
           
           const icon = L.divIcon({
-            className: 'marker-pulse',
-            html: `<div style="background:${color};width:32px;height:32px;border-radius:50%;
-                          border:4px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,0.6);
-                          display:flex;align-items:center;justify-content:center;
-                          color:white;font-weight:bold;font-size:14px;">✓</div>`,
+            className: '',
+            html: `<div style="background:${color};width:32px;height:32px;border-radius:50%;border:3px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">✓</div>`,
             iconSize: [32, 32]
           });
           
@@ -1039,19 +831,19 @@
           state.maps.main.setView([data.latitude, data.longitude], 14);
         }
         
-        showNotification('Risk assessment complete', 'success');
+        showNotification('Risk check complete', 'success');
         
       } catch (error) {
-        console.error('Risk check error:', error);
-        showNotification('Failed to check risk', 'error');
+        console.error('❌ Risk check error:', error);
+        showNotification('Failed to check risk: ' + error.message, 'error');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = originalText;
+        btn.textContent = originalText;
       }
     });
     
-    // ==================== ROUTE PLANNING ====================
-    document.getElementById('route-form').addEventListener('submit', async (e) => {
+    // Route planning
+    document.getElementById('route-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const src = document.getElementById('route-src').value;
@@ -1063,32 +855,31 @@
       }
       
       const btn = e.target.querySelector('button[type="submit"]');
-      const originalText = btn.innerHTML;
+      const originalText = btn.textContent;
       
       try {
         btn.disabled = true;
-        btn.innerHTML = '<span class="relative z-10"><div class="spinner mx-auto"></div></span>';
+        btn.innerHTML = '<div class="spinner mx-auto"></div>';
         
-        const response = await fetch(`${API_BASE}/safe-route`, {
+        console.log('🛣️ Calculating route:', src, '→', dst);
+        const res = await fetch(`${API_BASE}/safe-route`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ src, dst })
         });
         
-        if (!response.ok) throw new Error('Route calculation failed');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
-        const data = await response.json();
+        const data = await res.json();
+        console.log('✅ Route calculated:', data);
         
-        // Clear existing routes
         state.layers.routes.clearLayers();
         
         // Draw route
         let coords = [];
-        if (data.geometry && data.geometry.coordinates) {
-          // OSRM format: [lon, lat]
+        if (data.geometry?.coordinates) {
           coords = data.geometry.coordinates.map(c => [c[1], c[0]]);
         } else if (data.route_points) {
-          // Fallback format
           coords = data.route_points.map(p => [p.lat, p.lon]);
         }
         
@@ -1096,30 +887,22 @@
           const avgRisk = data.average_risk || 50;
           const routeColor = getRiskColor(avgRisk);
           
-          // Draw route line
           L.polyline(coords, {
             color: routeColor,
-            weight: 6,
-            opacity: 0.8,
-            smoothFactor: 1
+            weight: 5,
+            opacity: 0.8
           }).addTo(state.layers.routes);
           
-          // Add start marker
+          // Start marker
           const startIcon = L.divIcon({
-            html: `<div style="background:#10b981;width:36px;height:36px;border-radius:50%;
-                          border:4px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,0.6);
-                          display:flex;align-items:center;justify-content:center;
-                          color:white;font-weight:bold;font-size:16px;">S</div>`,
-            iconSize: [36, 36]
+            html: `<div style="background:#10b981;width:32px;height:32px;border-radius:50%;border:3px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">S</div>`,
+            iconSize: [32, 32]
           });
           
-          // Add end marker
+          // End marker
           const endIcon = L.divIcon({
-            html: `<div style="background:#ef4444;width:36px;height:36px;border-radius:50%;
-                          border:4px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,0.6);
-                          display:flex;align-items:center;justify-content:center;
-                          color:white;font-weight:bold;font-size:16px;">E</div>`,
-            iconSize: [36, 36]
+            html: `<div style="background:#ef4444;width:32px;height:32px;border-radius:50%;border:3px solid white;box-shadow:0 4px 12px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;">E</div>`,
+            iconSize: [32, 32]
           });
           
           L.marker(coords[0], { icon: startIcon })
@@ -1130,92 +913,75 @@
             .addTo(state.layers.routes)
             .bindPopup(`<div class="p-2"><b>End</b><br>${dst}</div>`);
           
-          // Add risk sample points
-          if (data.samples) {
-            data.samples.forEach((sample, i) => {
-              if (i % 5 === 0) { // Show every 5th point
-                const pointColor = getRiskColor(sample.risk);
-                const pointIcon = L.divIcon({
-                  html: `<div style="background:${pointColor};width:12px;height:12px;border-radius:50%;
-                                border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5)"></div>`,
-                  iconSize: [12, 12]
-                });
-                L.marker([sample.lat, sample.lon], { icon: pointIcon })
-                  .addTo(state.layers.routes)
-                  .bindPopup(`<div class="text-center p-1 text-xs">Risk: ${sample.risk}</div>`);
-              }
-            });
-          }
-          
-          state.maps.route.fitBounds(coords, { padding: [50, 50] });
+          state.maps.route.fitBounds(coords, { padding: [40, 40] });
         }
         
-        // Display route info
+        // Display info
         const infoDiv = document.getElementById('route-info');
         const avgRisk = data.average_risk || 50;
         const routeColor = getRiskColor(avgRisk);
-        const badgeClass = getRiskBadgeClass(avgRisk);
+        const badge = getRiskBadgeClass(avgRisk);
         
         infoDiv.innerHTML = `
           <div class="glass-strong p-4 rounded-lg space-y-3">
-            <div class="flex items-center justify-between pb-3 border-b border-white/10">
-              <span class="text-sm text-slate-400">Average Risk</span>
-              <div class="text-3xl font-bold" style="color:${routeColor}">${avgRisk}</div>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+              <span class="text-sm text-slate-400">Avg Risk</span>
+              <div class="text-2xl font-bold" style="color:${routeColor}">${avgRisk}</div>
             </div>
             
-            <div class="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <div class="text-slate-400 mb-1">Distance</div>
-                <div class="font-semibold">${data.distance_km?.toFixed(2)} km</div>
+            <div class="text-sm space-y-2">
+              <div class="flex justify-between">
+                <span class="text-slate-400">Distance:</span>
+                <span class="font-semibold">${data.distance_km ? data.distance_km.toFixed(2) + ' km' : 'N/A'}</span>
               </div>
-              <div>
-                <div class="text-slate-400 mb-1">Duration</div>
-                <div class="font-semibold">${data.duration_min?.toFixed(0) || 'N/A'} min</div>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Duration:</span>
+                <span class="font-semibold">${data.duration_min ? Math.round(data.duration_min) + ' min' : 'N/A'}</span>
               </div>
-            </div>
-            
-            <div class="pt-3 border-t border-white/10">
-              <span class="risk-badge ${badgeClass}">${getRiskLabel(avgRisk)}</span>
+              <div class="flex justify-between">
+                <span class="text-slate-400">Status:</span>
+                <span class="risk-badge ${badge}">${getRiskLabel(avgRisk)}</span>
+              </div>
             </div>
           </div>
         `;
         
         infoDiv.classList.remove('hidden');
-        
-        showNotification('Route calculated successfully', 'success');
+        showNotification('Route calculated', 'success');
         
       } catch (error) {
-        console.error('Route calculation error:', error);
-        showNotification('Failed to calculate route', 'error');
+        console.error('❌ Route error:', error);
+        showNotification('Failed to calculate route: ' + error.message, 'error');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = originalText;
+        btn.textContent = originalText;
       }
     });
     
-    // ==================== PAGE NAVIGATION ====================
+    // Page navigation
     function switchPage(page) {
-      // Hide all pages
       ['dashboard', 'map', 'route'].forEach(p => {
-        document.getElementById(`page-${p}`)?.classList.add('hidden');
-      });
-      
-      // Show selected page
-      document.getElementById(`page-${page}`)?.classList.remove('hidden');
-      
-      // Update nav buttons
-      ['dashboard', 'map', 'route'].forEach(p => {
-        const btn = document.getElementById(`nav-${p}`);
-        if (btn) {
+        const pageEl = document.getElementById(`page-${p}`);
+        const btnEl = document.getElementById(`nav-${p}`);
+        
+        if (pageEl) {
           if (p === page) {
-            btn.classList.add('active');
+            pageEl.classList.remove('hidden');
           } else {
-            btn.classList.remove('active');
+            pageEl.classList.add('hidden');
+          }
+        }
+        
+        if (btnEl) {
+          if (p === page) {
+            btnEl.classList.add('active');
+          } else {
+            btnEl.classList.remove('active');
           }
         }
       });
       
-      // Trigger specific actions
+      // Trigger page-specific actions
       if (page === 'map') {
         setTimeout(() => {
           state.maps.main?.invalidateSize();
@@ -1226,37 +992,36 @@
       }
     }
     
-    // Setup navigation
     document.getElementById('nav-dashboard')?.addEventListener('click', () => switchPage('dashboard'));
     document.getElementById('nav-map')?.addEventListener('click', () => switchPage('map'));
     document.getElementById('nav-route')?.addEventListener('click', () => switchPage('route'));
     
-    // ==================== INITIALIZATION ====================
-    async function initialize() {
+    // Initialize
+    async function init() {
       console.log('🚀 Initializing Urban Vigil Pro...');
+      console.log('📡 API Base:', API_BASE);
       
-      // Init AOS
-      AOS.init({ duration: 600, once: true, offset: 50 });
-      
-      // Init maps
       initMaps();
       
-      // Load data in parallel
-      await Promise.all([
-        loadPlaces(),
-        loadDashboard(),
-        loadHeatmap()
-      ]);
-      
-      showNotification('Urban Vigil Pro ready!', 'success');
-      console.log('✅ Initialization complete');
+      try {
+        await Promise.all([
+          loadPlaces(),
+          loadDashboard(),
+          loadHeatmap()
+        ]);
+        
+        showNotification('Urban Vigil Pro ready!', 'success');
+        console.log('✅ Initialization complete');
+      } catch (error) {
+        console.error('❌ Initialization error:', error);
+        showNotification('Failed to initialize. Check console.', 'error');
+      }
     }
     
-    // Start when DOM is ready
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initialize);
+      document.addEventListener('DOMContentLoaded', init);
     } else {
-      initialize();
+      init();
     }
   </script>
 </body>
